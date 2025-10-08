@@ -169,6 +169,7 @@
                         : [];
                 }
             @endphp
+            
 
             <div class="{{ $bg }} p-3 rounded-xl shadow-sm border hover:shadow-md transition">
                 <div class="flex items-center justify-between">
