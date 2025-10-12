@@ -138,6 +138,23 @@ class jadwalController extends Controller
             ];
         }
         ksort($cal);
+
+        foreach ($cal as &$branches) {
+            uksort($branches, function ($a, $b) {
+                // extract number if exists (e.g., "Cabang 2" -> 2)
+                preg_match('/\d+/', $a, $ma);
+                preg_match('/\d+/', $b, $mb);
+                $numA = $ma[0] ?? 0;
+                $numB = $mb[0] ?? 0;
+
+                // compare numeric first, fallback to string
+                return $numA == $numB
+                    ? strnatcasecmp($a, $b)
+                    : ($numA <=> $numB);
+            });
+        }
+        unset($branches);
+
         return $cal;
     }
 
