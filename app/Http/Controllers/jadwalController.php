@@ -11,6 +11,7 @@ use App\Models\Vacations;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class jadwalController extends Controller
 {
@@ -84,6 +85,7 @@ class jadwalController extends Controller
             // Ubah jadi struktur sama seperti session version
             $jadwalFlat = $flat->map(function ($r) {
                 return [
+                    'id'           => $r->id,
                     'id_cabang'    => $r->id_branch,
                     'cabang'       => $r->branches->name ?? 'Cabang ' . $r->branch_id,
                     'id_karyawan'  => $r->id_employee,
@@ -129,6 +131,7 @@ class jadwalController extends Controller
             $shift = $row['shift'] ?? 'Pagi';
 
             $cal[$day][$branchKey][$shift][] = [
+                'id' => $row['id'] ?? null,
                 'nama_karyawan' => $row['karyawan'] ?? '-',
                 'libur'         => (bool)($row['libur'] ?? false),
                 'id_karyawan'   => $row['id_karyawan'] ?? null,
@@ -407,4 +410,103 @@ class jadwalController extends Controller
         ));
     }
 
+    public function dayShow(Request $request)
+    {
+        $date = Carbon::parse($request->query('date'))->toDateString();
+
+        // Get all rows on that date
+        $rows = Schedules::with(['branches:id,name','employees:id,name'])
+            ->whereDate('date', $date)
+            ->orderBy('id_branch')->orderBy('shift')
+            ->get()
+            ->map(function($r){
+                return [
+                    'id'          => $r->id,
+                    'id_branch'   => $r->id_branch,
+                    'branch_name' => $r->branches->name ?? ('Cabang '.$r->branch_id),
+                    'id_employee' => $r->id_employee,
+                    'employee'    => $r->employees->name ?? '-',
+                    'shift'       => $r->shift,       // Pagi/Siang
+                    'is_vacation'    => (bool)$r->is_vacation,
+                ];
+            });
+
+        // Employee choices grouped per branch (for selects)
+        $branches = Branches::with(['employees:id,id_branch,name'])
+            ->get(['id','name'])
+            ->map(function($b){
+                return [
+                    'id'   => $b->id,
+                    'name' => $b->name,
+                    'employees' => $b->employees->map(fn($e)=>['id'=>$e->id,'name'=>$e->name])->values(),
+                ];
+            });
+
+        return response()->json([
+            'date' => $date,
+            'items' => $rows,
+            'branches' => $branches,
+        ]);
+    }
+
+    public function dayUpdate(Request $request)
+    {
+        $validated = $request->validate([
+            'date'   => ['required','date'],
+            'items'  => ['array'],
+            'items.*.id'          => ['nullable','integer','exists:schedules,id'],
+            'items.*.id_branch'   => ['required','exists:branches,id'],
+            'items.*.id_employee' => ['required','exists:employees,id'],
+            'items.*.shift'       => ['required', Rule::in(['Pagi','Siang'])],
+            'items.*.is_vacation'    => ['boolean'],
+        ]);
+
+        $date = Carbon::parse($validated['date'])->toDateString();
+        $items = $validated['items'] ?? [];
+
+        // Rule: employee cannot have >1 row on same date
+        $employeeIds = array_filter(array_map(fn($i)=>$i['id_employee'] ?? null, $items));
+        if (count($employeeIds) !== count(array_unique($employeeIds))) {
+            return response()->json([
+                'message' => 'Setiap karyawan hanya boleh satu entri pada tanggal ini.'
+            ], 422);
+        }
+
+        DB::transaction(function() use ($date, $items) {
+            // Strategy: replace-by-date (simple & safe)
+            Schedules::whereDate('date', $date)->delete();
+
+            $rows = [];
+            $now = now();
+            foreach ($items as $i) {
+                $rows[] = [
+                    'id_branch'   => (int)$i['id_branch'],
+                    'id_employee' => (int)$i['id_employee'],
+                    'date'        => $date,
+                    'shift'       => $i['shift'] === 'Siang' ? 'Siang' : 'Pagi',
+                    'is_vacation'    => (bool)($i['is_vacation'] ?? false),
+                    'created_at'  => $now,
+                    'updated_at'  => $now,
+                ];
+            }
+            if (!empty($rows)) {
+                Schedules::insert($rows);
+            }
+        });
+
+        return response()->json(['message' => 'Jadwal tanggal ini diperbarui.']);
+    }
+
+    public function destroy(Request $request)
+    {
+        $bulan = (int) $request->query('bulan', now()->month);
+        $tahun = (int) $request->query('tahun', now()->year);
+
+        $start = Carbon::create($tahun, $bulan, 1)->startOfMonth();
+        $end   = Carbon::create($tahun, $bulan, 1)->endOfMonth();
+
+        $deleted = Schedules::whereBetween('date', [$start, $end])->delete();
+
+        return back()->with('status', "Jadwal bulan {$bulan}/{$tahun} telah dihapus ({$deleted} entri).");
+    }
 }

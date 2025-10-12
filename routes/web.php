@@ -26,6 +26,9 @@ Route::controller(jadwalController::class)->group(function () {
     Route::get('/jadwal/generate', 'generate')->name('jadwal.generate');
     Route::post('/jadwal/store', 'store')->name('jadwal.store');
     Route::get('/jadwal/print', 'print')->name('jadwal.print');
+    Route::get('/jadwal/day', 'dayShow')->name('jadwal.day.show');
+    Route::patch('/jadwal/day', 'dayUpdate')->name('jadwal.day.update');
+    Route::delete('/jadwal/day', 'destroy')->name('jadwal.destroy');
 });
 
 Route::controller(branchesController::class)->group(function () {

@@ -42,7 +42,7 @@
                     Kelola Jadwal Karyawan
                 </h2>
                 <span class="inline-flex items-center text-sm px-2 py-1 rounded-full bg-gray-100">
-                    {{ \Carbon\Carbon::create($tahun, $bulan, 1)->translatedFormat('F Y') }}
+                    {{ \Carbon\Carbon::create($tahun, $bulan, 1)->locale('id_ID')->translatedFormat('F Y') }}
                 </span>
             </div>
 
@@ -128,39 +128,36 @@
                 </form>
             @endif
         </div>
-
-        {{-- Legend --}}
-        {{-- <div class="flex flex-wrap items-center gap-3 pb-3">
-            <span class="inline-flex items-center gap-2 text-sm">
-                <span class="w-3 h-3 rounded bg-yellow-100 border border-yellow-300"></span> Weekend
-            </span>
-            <span class="inline-flex items-center gap-2 text-sm">
-                <span class="w-3 h-3 rounded bg-blue-100 border border-blue-300"></span> Hari ini
-            </span>
-            <span class="inline-flex items-center gap-2 text-sm">
-                <span class="w-3 h-3 rounded bg-gray-300"></span> Pagi
-            </span>
-            <span class="inline-flex items-center gap-2 text-sm">
-                <span class="w-3 h-3 rounded bg-gray-500"></span> Siang
-            </span>
-            <span class="inline-flex items-center gap-2 text-sm">
-                <span class="w-3 h-3 rounded bg-red-500"></span> Libur (tetap shift Pagi)
-            </span>
-        </div> --}}
     </div>
 
     {{-- Kalender --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-7 gap-4 mt-4">
+    @php
+        $firstDayOfMonth = Carbon::create($tahun, $bulan, 1);
+        $firstWeekday = $firstDayOfMonth->dayOfWeekIso; // 1=Senin ... 7=Minggu
+        $lastDayOfMonth = Carbon::create($tahun, $bulan, $totalDaysInMonth);
+        $lastWeekday = $lastDayOfMonth->dayOfWeekIso;
+
+        // Total cell = offset awal + hari bulan + offset akhir
+        $leadingEmpty = $firstWeekday - 1; // kosong sebelum tanggal 1
+        $trailingEmpty = 7 - $lastWeekday; // kosong setelah akhir bulan
+    @endphp
+
+    <div class="grid grid-cols-7 gap-4 mt-4">
+        {{-- ======= OFFSET KOSONG SEBELUM TANGGAL 1 ======= --}}
+        @for ($i = 0; $i < $leadingEmpty; $i++)
+            <div class="bg-gray-500 p-3 rounded-xl shadow-sm border hover:shadow-md transition">
+                
+            </div>
+        @endfor
+
+        {{-- ======= LOOP TANGGAL 1 SAMPAI AKHIR ======= --}}
         @for ($day = 1; $day <= $totalDaysInMonth; $day++)
             @php
-                $dateObj    = Carbon::create($tahun, $bulan, $day);
+                $dateObj = Carbon::create($tahun, $bulan, $day);
                 $itemsForDay = $calendars[$day] ?? null;
 
-                $isWeekend = in_array($dateObj->dayOfWeekIso, [7]); ///Sun
-                $isToday   = $dateObj->isToday();
-
-                // Warna kartu
-                $bg = $isToday ? 'bg-blue-50' : ($isWeekend ? 'bg-yellow-50' : 'bg-gray-50');
+                $isWeekend = $dateObj->isSunday();
+                $bg = $isWeekend ? 'bg-red-100' : 'bg-gray-50';
 
                 // Jika filter cabang aktif, saring cabang hari ini
                 if ($selectedBranch && is_array($itemsForDay)) {
@@ -169,20 +166,23 @@
                         : [];
                 }
             @endphp
-            
 
             <div class="{{ $bg }} p-3 rounded-xl shadow-sm border hover:shadow-md transition">
                 <div class="flex items-center justify-between">
-                    <h4 class="text-lg font-semibold">
-                        {{ $dateObj->translatedFormat('l, j') }}
+                    <h4 class="text-sm font-bold">
+                        {{ $dateObj->locale('id_ID')->translatedFormat('l, j') }}
                     </h4>
-                    @if ($isToday)
-                        <span class="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700 border border-blue-200">Hari ini</span>
-                    @elseif ($isWeekend)
-                        <span class="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-800 border border-yellow-200">Minggu</span>
+                    @if($hasSaved)
+                        <button
+                            type="button"
+                            class="text-xs px-2 py-1 rounded bg-yellow-600 text-white hover:bg-yellow-700"
+                            onclick="openEditDay('{{ $dateObj->toDateString() }}')">
+                            Ubah
+                        </button>
                     @endif
                 </div>
 
+                {{-- == Daftar shift & karyawan == --}}
                 @if (!empty($itemsForDay) && is_array($itemsForDay))
                     <div class="grid grid-cols-1 gap-3 mt-3">
                         @foreach ($itemsForDay as $branchKey => $shifts)
@@ -190,14 +190,10 @@
                                 $branchLabel = is_string($branchKey) && !ctype_digit($branchKey)
                                     ? $branchKey
                                     : ('Cabang ' . $branchKey);
-
-                                // Urutkan shift Pagi lalu Siang
                                 $priority = ['Pagi' => 1, 'Siang' => 2];
                                 if (is_array($shifts)) {
                                     uksort($shifts, function($a, $b) use ($priority) {
-                                        $pa = $priority[$a] ?? 98;
-                                        $pb = $priority[$b] ?? 98;
-                                        return $pa <=> $pb;
+                                        return ($priority[$a] ?? 98) <=> ($priority[$b] ?? 98);
                                     });
                                 }
                             @endphp
@@ -206,7 +202,6 @@
                                 <div class="px-3 py-2 border-b font-medium flex items-center justify-between">
                                     <span>{{ $branchLabel }}</span>
                                 </div>
-
                                 <div class="p-3 grid grid-cols-1 gap-2">
                                     @foreach ($shifts as $shift => $employees)
                                         <div>
@@ -219,8 +214,7 @@
                                                         @php
                                                             $empName = $employee['nama_karyawan'] ?? $employee['karyawan'] ?? '—';
                                                             $isLibur = (bool)($employee['libur'] ?? false);
-                                                            // “Dot” indikator shift
-                                                            $dotClass = $shift === 'Pagi' ? 'bg-gray-300' : 'bg-gray-500';
+                                                            $dotClass = $shift === 'Pagi' ? 'bg-[#ffc107]' : 'bg-[#3498db]';
                                                             if ($isLibur) $dotClass = 'bg-red-500';
                                                         @endphp
                                                         <li class="flex items-center gap-2 text-sm">
@@ -228,11 +222,6 @@
                                                             <span class="{{ $isLibur ? 'text-red-600' : '' }}">
                                                                 {{ $empName }}
                                                             </span>
-                                                            {{-- @if ($isLibur)
-                                                                <span class="ml-1 text-[10px] px-2 py-0.5 rounded bg-red-100 text-red-700 border border-red-200">
-                                                                    Libur
-                                                                </span>
-                                                            @endif --}}
                                                         </li>
                                                     @endforeach
                                                 </ul>
@@ -249,6 +238,11 @@
                     <p class="text-gray-500 mt-3 text-sm">Tidak ada jadwal untuk tanggal ini.</p>
                 @endif
             </div>
+        @endfor
+
+        {{-- ======= OFFSET KOSONG SETELAH AKHIR BULAN ======= --}}
+        @for ($i = 0; $i < $trailingEmpty; $i++)
+            <div></div>
         @endfor
     </div>
 
@@ -279,8 +273,8 @@
                     <thead class="bg-gray-100 text-gray-700">
                         <tr>
                             <th class="text-left px-3 py-2 border">Karyawan</th>
-                            <th class="text-left px-3 py-2 border">Pagi (kerja)</th>
-                            <th class="text-left px-3 py-2 border">Siang (kerja)</th>
+                            <th class="text-left px-3 py-2 border">Pagi</th>
+                            <th class="text-left px-3 py-2 border">Siang</th>
                             <th class="text-left px-3 py-2 border">Libur</th>
                             <th class="text-left px-3 py-2 border">Total Entri</th>
                         </tr>
@@ -300,14 +294,46 @@
             </div>
 
             {{-- Aksi cepat --}}
-            <div class="mt-4 flex flex-wrap gap-2">
-                <a href="{{ route('jadwal.generate', ['bulan'=>$bulan,'tahun'=>$tahun]) }}"
-                   class="px-3 py-2 rounded-md border hover:bg-gray-50">
-                    Generate Ulang (acak)
+            <div class="mt-4 flex flex-wrap justify-between">
+                @if ($hasSaved)
+                    <button type="button"
+                        id="btnDestroyJadwal"
+                        data-url="{{ route('jadwal.destroy', ['bulan'=>$bulan,'tahun'=>$tahun]) }}"
+                        class="px-3 py-2 rounded-md bg-red-500 hover:bg-red-700 text-white border border-transparent">
+                        Menyusun Ulang
+                    </button>
+                @else
+                    <div></div> 
+                @endif
+
+                <a href="#top" class="px-3 py-2 rounded-md border hover:bg-gray-50">
+                    Kembali ke Atas
                 </a>
-                <a href="#top" class="px-3 py-2 rounded-md border hover:bg-gray-50">Kembali ke Atas</a>
             </div>
         </div>
     @endif
 </div>
+
+{{-- Modal --}}
+<div id="editDayModal" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50 flex items-center">
+  <div class="bg-white w-full max-w-3xl rounded-lg shadow-lg p-4">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="text-lg font-semibold">Edit Jadwal <span id="editDayTitle" class="text-gray-600 text-sm"></span></h3>
+      <button class="px-2 py-1" onclick="closeEditDay()">✕</button>
+    </div>
+
+    <div id="editDayBody" class="p-3 overflow-y-auto overflow-x-hidden flex-1 max-h-[60vh]">
+      <!-- rows injected here -->
+    </div>
+
+    <div class="flex items-center justify-between mt-4">
+      {{-- <button class="px-3 py-2 border rounded" onclick="addRow()">+ Tambah</button> --}}
+      <div class="space-x-2">
+        <button class="px-4 py-2 bg-gray-200 rounded" onclick="closeEditDay()">Batal</button>
+        <button class="px-4 py-2 bg-blue-600 text-white rounded" onclick="saveEditDay()">Simpan</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 @endsection
