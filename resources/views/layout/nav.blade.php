@@ -17,10 +17,10 @@
         <div class="flex items-center space-x-3 rtl:space-x-reverse">
             <i class="ri-user-fill text-dark text-sm opacity-10"></i>
             <a href="tel:5541251234"
-                class="text-sm  text-gray-700 dark:text-white hover:underline">TESS</a>
+                class="text-sm  text-gray-700 dark:text-white hover:underline">{{ auth()->user()->name }}</a>
             <a href="tel:5541251234" class="text-sm  text-black-500">|</a>
 
-            <form action="{{ route('dashboard') }}" method="GET">
+            <form action="{{ route('auth.logout') }}" method="POST">
                 @csrf
                 <button type="submit"
                     class="text-sm self-start text-black dark:text-black-500 hover:underline pb-1">Keluar</button>

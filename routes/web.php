@@ -12,12 +12,12 @@ use App\Http\Controllers\dashboardController;
 
 Route::get('/', function () {
     return redirect()->route('auth.index');
-});
+})->name('login');
 
 Route::controller(AuthController::class)->group(function () {
-    Route::get('/login', 'index')->name('auth.index');
-    Route::post('/login', 'login')->name('auth.login');
-    // Route::delete('/libur/{id}', 'destroy')->middleware('auth:sanctum')->name('libur.destroy');
+    Route::get('/login', 'index')->middleware('guest')->name('auth.index');
+    Route::post('/login', 'login')->middleware('guest')->name('auth.login');
+    Route::post('/logout', 'logout')->middleware('auth')->name('auth.logout');
 });
 
 Route::controller(jadwalController::class)->group(function () {
@@ -72,5 +72,5 @@ Route::controller(pasanganController::class)->group(function () {
 });
 
 Route::controller(dashboardController::class)->group(function () {
-    Route::get('/dashboard', 'index')->name('dashboard');
+    Route::get('/dashboard', 'index')->middleware(['auth', 'single.session'])->name('dashboard');
 });

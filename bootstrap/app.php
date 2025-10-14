@@ -4,6 +4,9 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 
+use App\Http\Middleware\EnforceSingleSession;
+use App\Http\Middleware\CheckRole;
+
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
@@ -12,7 +15,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias([
+            'single.session' => EnforceSingleSession::class,
+            'role' => CheckRole::class,
+        ]);
+
+        // $middleware->append(EnforceSingleSession::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
