@@ -31,7 +31,7 @@
     </div>
 
     {{-- Hidden camera input --}}
-    <input type="file" id="camera-input" accept="image/*" capture="environment" class="hidden">
+    <input type="file" id="camera-input" accept="image/*" capture="user" class="hidden">
 
     <div class="mt-4 grid grid-cols-1 gap-3 sm:mt-6 sm:grid-cols-2">
       <button id="checkin-button-desktop"
