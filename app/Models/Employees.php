@@ -11,7 +11,7 @@ class Employees extends Model
 
     protected $table = 'employees';
 
-    protected $fillable = ['name', 'id_branch', 'id_role', 'date_of_birth', 'date_start'];
+    protected $fillable = ['name', 'id_branch', 'default_pagi_shift_time_id', 'default_siang_shift_time_id', 'id_role', 'date_of_birth', 'date_start'];
 
     public function branches()
     {
@@ -32,4 +32,18 @@ class Employees extends Model
     {
         return $this->hasMany(Vacations::class, 'id_employee');
     }
+    
+    public function user()
+    {
+        return $this->hasOne(User::class, 'employee_id');
+    }
+
+    public function defaultPagiShift(){ 
+        return $this->belongsTo(ShiftTimes::class, 'default_pagi_shift_time_id');
+    }
+
+    public function defaultSiangShift(){ 
+        return $this->belongsTo(ShiftTimes::class, 'default_siang_shift_time_id'); 
+    }
+
 }

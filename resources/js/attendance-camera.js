@@ -39,6 +39,8 @@ document.addEventListener("DOMContentLoaded", () => {
           formData.append("_token", document.querySelector('meta[name="csrf-token"]').content);
 
           try {
+          console.log("FormData:", Object.fromEntries(formData));
+            
             const res = await fetch(`/attendance/${type}`, {
               method: "POST",
               body: formData,
@@ -46,22 +48,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const data = await res.json().catch(() => ({}));
             if (res.ok) {
+              console.log(data);
+              
               await Swal.fire({
                 icon: "success",
                 title: `${type} success`,
-                text: data.message ?? "Photo submitted successfully.",
+                text: data.ok ?? "Photo submitted successfully.",
                 confirmButtonColor: "#318f8c",
-              });
+              }).then(() => window.location.reload());
             } else {
+              console.error("Error Response:", data);
               throw new Error(data.message ?? "Upload failed");
             }
           } catch (err) {
+            console.log(err);
+            
             Swal.fire({
               icon: "error",
               title: "Error",
               text: err.message,
               confirmButtonColor: "#318f8c",
-            });
+            }).then(() => window.location.reload());
           }
         }
 

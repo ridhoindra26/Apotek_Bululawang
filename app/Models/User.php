@@ -59,4 +59,9 @@ class User extends Authenticatable
     {
         return $this->role === $role;
     }
+
+    public function employee()
+    {
+        return $this->belongsTo(Employees::class, 'employee_id');
+    }
 }

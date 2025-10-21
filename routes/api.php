@@ -3,7 +3,8 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-use App\Http\Controllers\jadwalController;
+// use App\Http\Controllers\jadwalController;
+use App\Http\Controllers\AttendanceController;
 
 /*
 |--------------------------------------------------------------------------
@@ -20,6 +21,8 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-// Route::controller(jadwalController::class)->group(function () {
-//     Route::get('/jadwal/generate', 'generate')->name('jadwal.generate');
-// });
+Route::controller(AttendanceController::class)->group(function () {
+    Route::post('/attendance/checkin', 'checkIn')->middleware(['auth', 'single.session'])->name('attendance.checkin');
+    Route::post('/attendance/checkout', 'checkOut')->middleware(['auth', 'single.session'])->name('attendance.checkout');
+    Route::post('/attendance/dummy', 'dummy')->name('attendance.dummy');
+});

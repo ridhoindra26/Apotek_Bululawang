@@ -7,61 +7,19 @@ use App\Models\Employees;
 use App\Models\Branches;
 use App\Models\Roles;
 use App\Models\Vacations;
+use App\Models\ShiftTimes;
 
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Schema;
 
 class jadwalController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    // public function index(Request $request)
-    // {
-    //     // Ambil bulan & tahun dari query supaya sinkron dengan form
-    //     $bulan = (int) $request->input('bulan', now()->addMonth()->month);
-    //     $tahun = (int) $request->input('tahun', now()->year);
-    //     $totalDaysInMonth = cal_days_in_month(CAL_GREGORIAN, $bulan, $tahun);
-
-    //     // Ambil hasil generate dari session (yang di-set pada generate())
-    //     $jadwalFlat = session('jadwal'); // array flat seperti yang kamu kirim
-
-    //     // Bentuk struktur untuk Blade: $calendars[DAY][BRANCH_NAME][SHIFT][] = employee
-    //     $calendars = [];
-
-    //     foreach ($jadwalFlat as $row) {
-    //         // day: integer 1..31 (safe untuk index)
-    //         $day = isset($row['tanggal']) ? (int) ltrim($row['tanggal'], '0') : null;
-    //         if (!$day) continue;
-
-    //         // label cabang: pakai nama jika ada, fallback ke "Cabang {id}"
-    //         $branchKey = $row['cabang'] ?? ('Cabang ' . ($row['id_cabang'] ?? '-'));
-
-    //         // shift: jika libur -> "Libur", selain itu pakai 'Pagi'/'Siang'
-    //         $shift = !empty($row['libur']) ? 'Libur' : ($row['shift'] ?? '-');
-
-    //         // data employee sesuai yang dibaca Blade
-    //         $calendars[$day][$branchKey][$shift][] = [
-    //             'nama_karyawan' => $row['karyawan'] ?? '-',
-    //             'libur'         => (bool)($row['libur'] ?? false),
-    //             'id_karyawan'   => $row['id_karyawan'] ?? null,
-    //         ];
-    //     }
-
-    //     // (Opsional) urutkan day agar rapi
-    //     ksort($calendars);
-
-    //     dd($jadwalFlat);
-    //     // Kirim juga $jadwal (flat) untuk tombol "Simpan Jadwal"
-    //     $jadwal = $jadwalFlat;
-
-
-    //     return view('jadwal.index', compact(
-    //         'bulan', 'tahun', 'totalDaysInMonth', 'calendars', 'jadwal'
-    //     ));
-    // }
 
     public function index(Request $request)
     {
@@ -351,20 +309,40 @@ class jadwalController extends Controller
         $lastDay  = Carbon::create($tahun, $bulan, 1)->endOfMonth()->toDateString();
 
         DB::transaction(function () use ($items, $firstDay, $lastDay) {
-            // 1) Hapus bulan ini dulu (idempotent)
+            // Hapus bulan ini dulu (idempotent)
             Schedules::whereBetween('date', [$firstDay, $lastDay])->delete();
 
-            // 2) Susun baris baru
+            // Ambil default shift time
+            $employeeIds = collect($items)->pluck('id_karyawan')->filter()->unique()->values();
+            $empDefaults = Employees::whereIn('id', $employeeIds)
+                ->get(['id','default_pagi_shift_time_id','default_siang_shift_time_id'])
+                ->keyBy('id');
+
+            // Susun baris baru
             $rows = [];
             foreach ($items as $r) {
                 if (empty($r['id_cabang']) || empty($r['id_karyawan']) || empty($r['tanggal_full']) || empty($r['shift'])) {
                     continue;
                 }
+
+                $shift = $r['shift'] === 'Siang' ? 'Siang' : 'Pagi';
+                $shiftTimeId = $shift === 'Siang' ? 3 : 1;
+
+                if ($emp = $empDefaults->get((int)$r['id_karyawan'])) {
+                    if ($shift === 'Pagi' && !empty($emp->default_pagi_shift_time_id)) {
+                        $shiftTimeId = (int)$emp->default_pagi_shift_time_id;
+                    }
+                    if ($shift === 'Siang' && !empty($emp->default_siang_shift_time_id)) {
+                        $shiftTimeId = (int)$emp->default_siang_shift_time_id;
+                    }
+                }
+
                 $rows[] = [
                     'id_branch'   => (int)$r['id_cabang'],
                     'id_employee' => (int)$r['id_karyawan'],
                     'date'        => $r['tanggal_full'],                   // 'Y-m-d'
                     'shift'       => $r['shift'] === 'Siang' ? 'Siang' : 'Pagi',
+                    'id_shift_time' => $shiftTimeId,
                     'is_vacation'    => (bool)($r['libur'] ?? false),
                     'created_at'  => now(),
                     'updated_at'  => now(),
@@ -429,12 +407,18 @@ class jadwalController extends Controller
 
     public function dayShow(Request $request)
     {
-        $date = Carbon::parse($request->query('date'))->toDateString();
+        // 1) Validate & normalize date
+        try {
+            $date = Carbon::parse($request->query('date'))->toDateString();
+        } catch (\Throwable $e) {
+            return response()->json(['message' => 'Invalid date'], 422);
+        }
 
         // Get all rows on that date
-        $rows = Schedules::with(['branches:id,name','employees:id,name'])
+        $rows = Schedules::with(['branches:id,name','employees:id,name', 'shiftTime:id,group,code,start_time,end_time'])
             ->whereDate('date', $date)
-            ->orderBy('id_branch')->orderBy('shift')
+            ->orderBy('id_branch')
+            ->orderByRaw("CASE WHEN shift = 'Pagi' THEN 0 ELSE 1 END")
             ->get()
             ->map(function($r){
                 return [
@@ -444,9 +428,11 @@ class jadwalController extends Controller
                     'id_employee' => $r->id_employee,
                     'employee'    => $r->employees->name ?? '-',
                     'shift'       => $r->shift,       // Pagi/Siang
+                    'id_shift_time'  => $r->id_shift_time,
+                    'shift_time_code' => $r->shiftTime?->code,
                     'is_vacation'    => (bool)$r->is_vacation,
                 ];
-            });
+            })->values();
 
         // Employee choices grouped per branch (for selects)
         $branches = Branches::with(['employees:id,id_branch,name'])
@@ -459,10 +445,52 @@ class jadwalController extends Controller
                 ];
             });
 
+        $shiftTimesGrouped = ShiftTimes::query()
+            ->get(['id','group','code','start_time','end_time'])
+            ->groupBy('group') // 'Pagi' / 'Siang'
+            ->map(function ($collection) {
+                return $collection->map(fn ($st) => [
+                    'id'         => $st->id,
+                    'code'       => $st->code,      // e.g. P1/S3 (show as badge)
+                    'start_time' => $st->start_time, // '06:50'
+                    'end_time'   => $st->end_time,   // '14:50'
+                ])->values();
+            });
+
+        // 5) (Optional) per-employee default variant (if you added these columns)
+        //    FE can use this to preselect variant when adding new assignment dynamically.
+        $employeeOverrides = [];
+        if (Schema::hasColumn('employees', 'default_pagi_shift_time_id') &&
+            Schema::hasColumn('employees', 'default_siang_shift_time_id')) {
+
+            $employeeIds = $rows->pluck('id_employee')->filter()->unique()->values();
+            $employeeOverrides = Employees::whereIn('id', $employeeIds)
+                ->get(['id','default_pagi_shift_time_id','default_siang_shift_time_id'])
+                ->mapWithKeys(function ($e) {
+                    return [
+                        $e->id => [
+                            'Pagi'  => $e->default_pagi_shift_time_id,
+                            'Siang' => $e->default_siang_shift_time_id,
+                        ]
+                    ];
+                });
+        }
+
+        // 6) Company defaults for FE logic (Pagi→1, Siang→3)
+        $defaults = [
+            'shift_time_id' => [
+                'Pagi'  => 1,
+                'Siang' => 3,
+            ],
+        ];
+
         return response()->json([
-            'date' => $date,
-            'items' => $rows,
-            'branches' => $branches,
+            'date'          => $date,
+            'items'         => $rows,
+            'branches'      => $branches,
+            'shift_times'   => $shiftTimesGrouped,  // { Pagi: [...], Siang: [...] }
+            'defaults'      => $defaults,
+            'emp_overrides' => $employeeOverrides,  // { [empId]: { Pagi: id|null, Siang: id|null } }
         ]);
     }
 
@@ -475,6 +503,7 @@ class jadwalController extends Controller
             'items.*.id_branch'   => ['required','exists:branches,id'],
             'items.*.id_employee' => ['required','exists:employees,id'],
             'items.*.shift'       => ['required', Rule::in(['Pagi','Siang'])],
+            'items.*.id_shift_time'  => ['required','exists:shift_times,id'],
             'items.*.is_vacation'    => ['boolean'],
         ]);
 
@@ -501,6 +530,7 @@ class jadwalController extends Controller
                     'id_employee' => (int)$i['id_employee'],
                     'date'        => $date,
                     'shift'       => $i['shift'] === 'Siang' ? 'Siang' : 'Pagi',
+                    'id_shift_time'  => (int)($i['id_shift_time'] ?? null),
                     'is_vacation'    => (bool)($i['is_vacation'] ?? false),
                     'created_at'  => $now,
                     'updated_at'  => $now,

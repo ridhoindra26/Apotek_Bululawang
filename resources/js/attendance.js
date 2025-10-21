@@ -18,7 +18,7 @@ function bindButton(id, title, success) {
   btn.addEventListener("click", async () => {
     const res = await Swal.fire({
       title,
-      text: "This is a dummy action.",
+      text: "Pastikan benar.",
       icon: "question",
       showCancelButton: true,
       confirmButtonColor: "#318f8c",
@@ -42,4 +42,16 @@ document.addEventListener("DOMContentLoaded", () => {
   // Desktop buttons
   bindButton("checkin-button-desktop", "Check In now?", "Checked In (dummy)");
   bindButton("checkout-button-desktop", "Check Out now?", "Checked Out (dummy)");
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  const clock = document.getElementById('live-clock');
+  if (!clock) return;
+
+  const update = () => {
+    const d = new Date();
+    clock.textContent = d.toLocaleTimeString('id', { hour12: false });
+  };
+  update();
+  setInterval(update, 1000);
 });

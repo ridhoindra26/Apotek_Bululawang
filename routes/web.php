@@ -9,6 +9,7 @@ use App\Http\Controllers\karyawanController;
 use App\Http\Controllers\liburController;
 use App\Http\Controllers\pasanganController;
 use App\Http\Controllers\dashboardController;
+use App\Http\Controllers\AttendanceController;
 
 Route::get('/', function () {
     return redirect()->route('auth.index');
@@ -73,4 +74,10 @@ Route::controller(pasanganController::class)->group(function () {
 
 Route::controller(dashboardController::class)->group(function () {
     Route::get('/dashboard', 'index')->middleware(['auth', 'single.session'])->name('dashboard');
+});
+
+Route::controller(AttendanceController::class)->group(function () {
+    Route::post('/attendance/checkin', 'checkIn')->middleware(['auth', 'single.session'])->name('attendance.checkin');
+    Route::post('/attendance/checkout', 'checkOut')->middleware(['auth', 'single.session'])->name('attendance.checkout');
+    Route::get('/attendance/photo/{type}/{id}', 'getPhoto')->name('attendance.photo');
 });
