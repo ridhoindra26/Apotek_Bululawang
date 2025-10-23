@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\Models\Attendances;
+use App\Models\TimeBalances;
 
 
 class dashboardController extends Controller
@@ -19,6 +20,9 @@ class dashboardController extends Controller
         // Default empty data
         $attendanceToday = null;
         $recentAttendances = collect();
+        $balance_minutes = 0;
+        $debt_minutes = 0;
+        $credit_minutes = 0;
 
         // Only load attendance if linked to employee
         if ($user && $user->id_employee) {
@@ -30,9 +34,14 @@ class dashboardController extends Controller
                 ->orderByDesc('work_date')
                 ->take(7)
                 ->get();
+            
+            $timeBalance = TimeBalances::where('id_employee', $user->id_employee)->first();
+            $balance_minutes = $timeBalance ? $timeBalance->getNetMinutesAttribute() : 0;
+            $debt_minutes = $timeBalance ? $timeBalance->debt_minutes : 0;
+            $credit_minutes = $timeBalance ? $timeBalance->credit_minutes : 0;
         }
 
-        return view('dashboard', compact('attendanceToday', 'recentAttendances'));
+        return view('dashboard', compact('attendanceToday', 'recentAttendances', 'balance_minutes', 'debt_minutes', 'credit_minutes'));
     }
 
     /**

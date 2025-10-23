@@ -35,7 +35,7 @@
     $selectedBranch = request('branch'); // string atau null
 @endphp
 
-<div class="container mx-auto">
+<div class="container-fluid mx-auto">
     {{-- Sticky header --}}
     <div class="sticky top-0 z-10 bg-white/80 backdrop-blur border-b border-gray-100 rounded px-4">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 py-3">

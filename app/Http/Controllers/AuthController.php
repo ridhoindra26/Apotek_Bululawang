@@ -68,11 +68,11 @@ class AuthController extends Controller
         $user->forceFill(['current_session_id' => $currentId])->save();
 
         if ($user->role === 'admin') {
-            return redirect()->route('admin.dashboard');
+            return redirect()->route('dashboard');
         }
 
         if ($user->role === 'manager') {
-            return redirect()->route('manager.dashboard');
+            return redirect()->route('dashboard');
         }
 
         // Default users

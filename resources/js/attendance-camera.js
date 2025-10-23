@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const preview = URL.createObjectURL(file);
         const confirm = await Swal.fire({
           title: `Confirm ${type}?`,
-          html: `<img src="${preview}" class="rounded-xl max-h-60 object-cover mx-auto mb-3"/>`,
+          html: `<p class="text-[#318f8c] mb-1">Wih cakepnya oiiii</p><img src="${preview}" class="rounded-xl max-h-60 object-cover mx-auto mb-3"/>`,
           showCancelButton: true,
           confirmButtonColor: "#318f8c",
           confirmButtonText: `Yes, ${type}`,
@@ -53,7 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
               await Swal.fire({
                 icon: "success",
                 title: `${type} success`,
-                text: data.ok ?? "Photo submitted successfully.",
+                text: data.message ?? "Upload success",
                 confirmButtonColor: "#318f8c",
               }).then(() => window.location.reload());
             } else {

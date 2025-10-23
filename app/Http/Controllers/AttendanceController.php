@@ -11,6 +11,7 @@ use App\Models\Schedules;
 use App\Models\ShiftTimes;
 use App\Models\TimeBalances;
 use App\Models\TimeLedgers;
+use App\Models\Branches;
 
 use Illuminate\Support\Facades\DB;
 
@@ -283,14 +284,6 @@ class AttendanceController extends Controller
     }
 
     /**
-     * GET /attendance/check-in
-     */
-    public function dummy()
-    {
-        return response()->json('$data', 200);
-    }
-
-    /**
      * GET /attendance/photo/{type}/{id}
      */
     public function getPhoto(string $type, int $id)
@@ -311,5 +304,187 @@ class AttendanceController extends Controller
         }
 
         return response()->json(['img' => $photo->url()]);
+    }
+
+
+    public function index(Request $req)
+    {
+        // Filters: q(name), branch, date_from, date_to, status
+        $qName  = trim($req->get('q', ''));
+        $branch = $req->get('branch');
+        $from   = $req->get('from');
+        $to     = $req->get('to');
+        $status = $req->get('status');
+
+        $att = Attendances::query()
+            ->with(['employee:id,name', 'branch:id,name'])
+            ->when($qName, fn($q) => $q->whereHas('employee', fn($qq) => $qq->where('name','like',"%{$qName}%")))
+            ->when($branch, fn($q) => $q->where('id_branch', $branch))
+            ->when($status, fn($q) => $q->where('status', $status))
+            ->when($from, fn($q) => $q->whereDate('work_date','>=',$from))
+            ->when($to, fn($q) => $q->whereDate('work_date','<=',$to))
+            ->orderByDesc('work_date')
+            ->orderBy('id_employee')
+            ->paginate(12)
+            ->withQueryString();
+
+        // dropdown branches (optional)
+        $branches = Branches::orderBy('name')->get(['id','name']);
+
+        return view('attendances.index', compact('att', 'branches', 'qName', 'branch', 'from', 'to', 'status'));
+    }
+
+    public function minutesData(Attendances $attendance)
+    {
+        // $this->authorize('view', $attendance); // optional
+
+        $penaltySuggested = max(
+            (($attendance->late_minutes ?? 0) * 45)
+            + ($attendance->early_leave_minutes ?? 0)
+            - ($attendance->early_checkin_minutes ?? 0),
+            0
+        );
+        $overtimeSuggested = $attendance->overtime_minutes ?? 0;
+
+        return response()->json([
+            'ok' => true,
+            'attendance' => [
+                'id' => $attendance->id,
+                'date' => optional($attendance->work_date)->format('d M Y'),
+                'employee' => $attendance->employee->name ?? null,
+                'branch' => $attendance->branch->name ?? null,
+                'status' => $attendance->status,
+                'work_minutes' => $attendance->work_minutes ?? 0,
+                'late_minutes' => $attendance->late_minutes ?? 0,
+                'early_leave_minutes' => $attendance->early_leave_minutes ?? 0,
+                'early_checkin_minutes' => $attendance->early_checkin_minutes ?? 0,
+                'overtime_minutes' => $attendance->overtime_minutes ?? 0,
+                'penalty_minutes' => $attendance->penalty_minutes ?? 0,
+                'overtime_applied_minutes' => $attendance->overtime_applied_minutes ?? 0,
+            ],
+            'suggestions' => [
+                'penalty' => $penaltySuggested,
+                'overtime' => $overtimeSuggested,
+            ],
+        ]);
+    }
+
+    public function minutesConfirm(Request $request, Attendances $attendance)
+    {
+        // Max overtime = Early Check-in + Overtime
+        $cap = max(($attendance->early_checkin_minutes ?? 0) + ($attendance->overtime_minutes ?? 0), 0);
+
+        $data = $request->validate([
+            'penalty_minutes'          => ['required','integer','min:0'],
+            'overtime_applied_minutes' => ['required','integer','min:0','max:'.$cap],
+            'note'                     => ['nullable','string','max:500'],
+        ], [
+            'overtime_applied_minutes.max' =>
+                "Overtime applied cannot exceed total (Early Check-in + Overtime) = $cap minute(s).",
+        ]);
+
+        // return response()->json([
+        //     'ok' => true,
+        //     'message' => 'Minutess confirmed & balances updated.',
+        //     'data' => $data,
+        //     'attendance' => $attendance,
+        //     'delta' => [
+        //         'penalty' => $data['penalty_minutes'] - $attendance->penalty_minutes,
+        //         'overtime' => $data['overtime_applied_minutes'] - $attendance->overtime_applied_minutes,
+        //     ]
+        // ]);
+
+        DB::transaction(function () use ($attendance, $data) {
+            $employeeId = $attendance->id_employee;
+            $workDate   = $attendance->work_date?->toDateString();
+
+            // --- Old vs New values
+            $oldPenalty = (int) ($attendance->penalty_minutes ?? 0);
+            $oldOT      = (int) ($attendance->overtime_applied_minutes ?? 0);
+            $newPenalty = (int) $data['penalty_minutes'];
+            $newOT      = (int) $data['overtime_applied_minutes'];
+
+            // --- Update attendance
+            $attendance->penalty_minutes = $newPenalty;
+            $attendance->overtime_applied_minutes = $newOT;
+            $attendance->save();
+
+            // --- Calculate deltas
+            $deltaPenalty = $newPenalty - $oldPenalty; // + => add, - => reduce
+            $deltaOT      = $newOT - $oldOT;           // + => add, - => spend
+
+            // --- Ensure balance exists
+            $balance = TimeBalances::firstOrCreate(
+                ['id_employee' => $employeeId],
+                ['debt_minutes' => 0, 'credit_minutes' => 0]
+            );
+
+            // --- Update TimeBalances
+            if ($deltaPenalty > 0) {
+                $balance->debt_minutes += $deltaPenalty; // add debt
+            } elseif ($deltaPenalty < 0) {
+                $balance->debt_minutes = max(0, $balance->debt_minutes + $deltaPenalty); // reduce debt
+            }
+
+            if ($deltaOT > 0) {
+                $balance->credit_minutes += $deltaOT; // add credit
+            } elseif ($deltaOT < 0) {
+                $balance->credit_minutes = max(0, $balance->credit_minutes + $deltaOT); // spend credit
+            }
+
+            $balance->save();
+
+            // --- Create ledger entries for audit
+            $noteExtra = $data['note'] ? (' | '.$data['note']) : '';
+
+            if ($deltaPenalty !== 0) {
+                TimeLedgers::create([
+                    'id_employee'   => $employeeId,
+                    'work_date'     => $workDate,
+                    'id_attendance' => $attendance->id,
+                    'type'          => $deltaPenalty > 0 ? 'penalty_add' : 'penalty_reduce',
+                    'minutes'       => abs($deltaPenalty),
+                    'source'        => 'admin_confirm',
+                    'note'          => "Penalty adjusted: {$oldPenalty} → {$newPenalty}{$noteExtra}",
+                ]);
+            }
+
+            if ($deltaOT !== 0) {
+                TimeLedgers::create([
+                    'id_employee'   => $employeeId,
+                    'work_date'     => $workDate,
+                    'id_attendance' => $attendance->id,
+                    'type'          => $deltaOT > 0 ? 'overtime_add' : 'overtime_spend',
+                    'minutes'       => abs($deltaOT),
+                    'source'        => 'admin_confirm',
+                    'note'          => "Overtime adjusted: {$oldOT} → {$newOT}{$noteExtra}",
+                ]);
+            }
+        });
+
+        return response()->json([
+            'ok' => true,
+            'message' => 'Minutess confirmed & balances updated.',
+            'delta' => [
+                'penalty' => $data['penalty_minutes'] - $attendance->penalty_minutes,
+                'overtime' => $data['overtime_applied_minutes'] - $attendance->overtime_applied_minutes,
+            ]
+        ]);
+    }
+
+    // return JSON {img: "..."} using your AttendancePhotos::url()
+    public function photoUrl(Attendances $attendance, string $type)
+    {
+        $event = AttendanceEvents::with('photos')
+            ->where('id_attendance', $attendance->id)
+            ->where('type', $type)
+            ->latest('event_at')
+            ->first();
+
+        if (!$event || $event->photos->isEmpty()) {
+            return response()->json(['message' => 'Photo not found.'], 404);
+        }
+
+        return response()->json(['ok'=>true, 'img' => $event->photos->first()->url()]);
     }
 }
