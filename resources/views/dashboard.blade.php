@@ -4,9 +4,25 @@
 @section('page_title', 'Dashboard')
 
 @section('content')
+
+@php
+  $greeting_title = match(true) {
+    now()->hour < 12 => 'Selamat Pagiii',
+    now()->hour < 18 => 'Selamat Sianggg',
+    default => 'Selamat Malammm',
+  };
+@endphp
+
 <div class="mx-auto w-full max-w-4xl px-4 sm:px-6">
   {{-- HEADER CARD --}}
   <div class="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <h2 class="text-xl sm:text-2xl font-bold text-slate-800">
+          {{ $greeting_title }}, {{ auth()->user()->name }}
+        </h2>
+      </div>
+    </div>
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <p class="text-slate-500 text-xs sm:text-sm">Hari ini</p>

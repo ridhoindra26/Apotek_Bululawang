@@ -433,7 +433,7 @@ function collectPayload() {
 
 window.saveEditDay = function () {
   const payload = collectPayload();
-  // console.log(payload);
+  console.log(payload);
 
   fetch(`/jadwal/day`, {
     method: "PATCH",
@@ -446,6 +446,7 @@ window.saveEditDay = function () {
     .then(async (r) => {
       if (!r.ok) {
         const data = await r.json().catch(() => ({}));
+        console.log(data);
         throw new Error(data.message || "Gagal menyimpan.");
       }
       return r.json();
