@@ -62,6 +62,6 @@ class Attendances extends Model
 
     public function getWorkDurationAttribute(): ?CarbonInterval
     {
-        return is_null($this->work_seconds) ? null : CarbonInterval::seconds($this->work_seconds);
+        return is_null($this->work_minutes) ? null : CarbonInterval::minutes($this->work_minutes);
     }
 }

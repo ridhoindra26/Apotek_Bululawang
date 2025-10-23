@@ -1,7 +1,7 @@
 @extends('layout.layout')
 
 @section('content')
-<div class="container mx-auto py-4">
+<div class="container-fluid mx-auto py-4">
     <h2 class="text-2xl font-bold mb-4">Kelola Libur Karyawan</h2>
 
     {{-- Filter --}}

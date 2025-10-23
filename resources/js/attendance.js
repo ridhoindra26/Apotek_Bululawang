@@ -36,12 +36,12 @@ document.addEventListener("DOMContentLoaded", () => {
   runClock();
 
   // Mobile action bar buttons
-  bindButton("checkin-button", "Check In now?", "Checked In (dummy)");
-  bindButton("checkout-button", "Check Out now?", "Checked Out (dummy)");
+  // bindButton("checkin-button", "Check In now?", "Checked In (dummy)");
+  // bindButton("checkout-button", "Check Out now?", "Checked Out (dummy)");
 
-  // Desktop buttons
-  bindButton("checkin-button-desktop", "Check In now?", "Checked In (dummy)");
-  bindButton("checkout-button-desktop", "Check Out now?", "Checked Out (dummy)");
+  // // Desktop buttons
+  // bindButton("checkin-button-desktop", "Check In now?", "Checked In (dummy)");
+  // bindButton("checkout-button-desktop", "Check Out now?", "Checked Out (dummy)");
 });
 
 document.addEventListener('DOMContentLoaded', () => {

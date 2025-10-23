@@ -25,13 +25,13 @@
     {{-- STATUS SUMMARY --}}
     <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
       <div class="rounded-xl border border-slate-200 p-3 text-center bg-slate-50">
-        <p class="text-xs text-slate-500">Masuk</p>
+        <p class="text-xs text-slate-500">Check-In</p>
         <p class="font-semibold text-slate-800">
           {{ $attendanceToday?->check_in_at ? $attendanceToday->check_in_at->format('H:i') : '—' }}
         </p>
       </div>
       <div class="rounded-xl border border-slate-200 p-3 text-center bg-slate-50">
-        <p class="text-xs text-slate-500">Keluar</p>
+        <p class="text-xs text-slate-500">Check-Out</p>
         <p class="font-semibold text-slate-800">
           {{ $attendanceToday?->check_out_at ? $attendanceToday->check_out_at->format('H:i') : '—' }}
         </p>
@@ -59,12 +59,12 @@
       <div class="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <button id="checkin-button-desktop"
                 class="hidden sm:inline-flex w-full items-center justify-center !rounded-md bg-[#318f8c] px-6 py-3 text-white font-semibold hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#318f8c]/40 active:opacity-100 transition-all">
-          Masuk
+          Check-In
         </button>
 
         <button id="checkout-button-desktop"
                 class="hidden sm:inline-flex w-full items-center justify-center !rounded-md bg-[#318f8c] px-6 py-3 text-white font-semibold hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#318f8c]/40 active:opacity-100 transition-all">
-          Keluar
+          Check-Out
         </button>
       </div>
     @else
@@ -84,8 +84,8 @@
         <thead>
           <tr class="text-left text-slate-500 border-b">
             <th class="py-2 pr-4">Tanggal</th>
-            <th class="py-2 pr-4">Masuk</th>
-            <th class="py-2 pr-4">Keluar</th>
+            <th class="py-2 pr-4">Check-In</th>
+            <th class="py-2 pr-4">Check-Out</th>
             <th class="py-2 pr-4">Durasi</th>
             <th class="py-2 pr-4">Status</th>
           </tr>
@@ -98,7 +98,7 @@
                 <button type="button"
                         class="text-[#318f8c] hover:underline js-photo-fetch"
                         data-url="{{ route('attendance.photo', ['type' => 'check_in', 'id' => $a->id]) }}"
-                        data-caption="Masuk — {{ $a->work_date->format('Y-m-d') }} {{ $a->check_in_at->format('H:i') }}">
+                        data-caption="Check-In — {{ $a->work_date->format('Y-m-d') }} {{ $a->check_in_at->format('H:i') }}">
                   {{ $a->check_in_at->format('H:i') }}
                 </button>
             </td>
@@ -112,7 +112,7 @@
                 <button type="button"
                         class="text-[#318f8c] hover:underline js-photo-fetch"
                         data-url="{{ route('attendance.photo', ['type' => 'check_out', 'id' => $a->id]) }}"
-                        data-caption="Keluar — {{ $a->work_date->format('Y-m-d') }} {{ $outTime }}">
+                        data-caption="Check-Out — {{ $a->work_date->format('Y-m-d') }} {{ $outTime }}">
                   {{ $outTime }}
                 </button>
               @else
@@ -143,11 +143,11 @@
   <div class="mx-auto flex w-full max-w-md gap-3">
     <button id="checkin-button"
             class="flex-1 !rounded-md bg-[#318f8c] py-3 text-white font-semibold hover:opacity-90 focus:ring-2 focus:ring-[#318f8c]/40">
-       Masuk
+       Check-In
     </button>
     <button id="checkout-button"
             class="flex-1 !rounded-md bg-[#318f8c] py-3 text-white font-semibold hover:opacity-90 focus:ring-2 focus:ring-[#318f8c]/40">
-      Keluar
+      Check-Out
     </button>
   </div>
 </div>
