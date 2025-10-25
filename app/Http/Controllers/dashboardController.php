@@ -37,11 +37,9 @@ class dashboardController extends Controller
             
             $timeBalance = TimeBalances::where('id_employee', $user->id_employee)->first();
             $balance_minutes = $timeBalance ? $timeBalance->getNetMinutesAttribute() : 0;
-            $debt_minutes = $timeBalance ? $timeBalance->debt_minutes : 0;
-            $credit_minutes = $timeBalance ? $timeBalance->credit_minutes : 0;
         }
 
-        return view('dashboard', compact('attendanceToday', 'recentAttendances', 'balance_minutes', 'debt_minutes', 'credit_minutes'));
+        return view('dashboard', compact('attendanceToday', 'recentAttendances', 'balance_minutes'));
     }
 
     /**

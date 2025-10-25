@@ -1,5 +1,6 @@
 @extends('layout.layout')
 @section('title','Akun')
+@section('page_title','Kelola Akun')
 
 @section('content')
 <div x-data="accountPage()" class="container-fluid p-6 space-y-6">
@@ -14,43 +15,43 @@
     </button>
   </div>
 
-  {{-- Alerts --}}
-  @if(session('success'))
-    <div class="rounded-md bg-green-50 border border-green-200 text-green-700 px-4 py-2">
-      {{ session('success') }}
+    {{-- Filters --}}
+    <form method="GET" action="{{ route('accounts.index') }}" class="grid md:grid-cols-4 gap-3">
+    {{-- Search --}}
+    <div>
+        <label class="block text-sm text-slate-600 mb-1">Search</label>
+        <input type="text" name="q" value="{{ $q }}" placeholder="name / username / email"
+            class="w-full border rounded-lg px-3 py-2" />
     </div>
-  @endif
-  @if ($errors->any())
-    <div class="rounded-md bg-red-50 border border-red-200 text-red-700 px-4 py-2">
-      <ul class="list-disc ml-5">
-        @foreach ($errors->all() as $error)
-          <li>{{ $error }}</li>
-        @endforeach
-      </ul>
-    </div>
-  @endif
 
-  {{-- Filters --}}
-  <form method="GET" action="{{ route('accounts.index') }}" class="grid md:grid-cols-3 gap-3">
+    {{-- Role --}}
     <div>
-      <label class="block text-sm text-slate-600 mb-1">Search</label>
-      <input type="text" name="q" value="{{ $q }}" placeholder="name/username/email"
-             class="w-full border rounded-lg px-3 py-2" />
-    </div>
-    <div>
-      <label class="block text-sm text-slate-600 mb-1">Role</label>
-      <select name="role" class="w-full border rounded-lg px-3 py-2">
+        <label class="block text-sm text-slate-600 mb-1">Role</label>
+        <select name="role" class="w-full border rounded-lg px-3 py-2">
         <option value="">All</option>
         @foreach($roles as $r)
-          <option value="{{ $r }}" @selected($role===$r)>{{ ucfirst($r) }}</option>
+            <option value="{{ $r }}" @selected($role === $r)>{{ ucfirst($r) }}</option>
         @endforeach
-      </select>
+        </select>
     </div>
-    <div class="flex items-end">
-      <button class="px-4 py-2 rounded-lg bg-slate-700 text-white hover:bg-slate-800">Filter</button>
-      <a href="{{ route('accounts.index') }}" class="ml-2 px-4 py-2 rounded-lg border hover:bg-slate-50">Reset</a>
+
+    {{-- Employee --}}
+    <div>
+        <label class="block text-sm text-slate-600 mb-1">Employee</label>
+        <select name="employee_id" class="w-full border rounded-lg px-3 py-2">
+        <option value="">All</option>
+        @foreach($employees as $emp)
+            <option value="{{ $emp->id }}" @selected($employeeId === (string)$emp->id)>{{ $emp->name }}</option>
+        @endforeach
+        </select>
     </div>
-  </form>
+
+    {{-- Actions --}}
+    <div class="flex items-end gap-2">
+        <button class="px-4 py-2 rounded-lg bg-slate-700 text-white hover:bg-slate-800">Filter</button>
+        <a href="{{ route('accounts.index') }}" class="px-4 py-2 rounded-lg border hover:bg-slate-50">Reset</a>
+    </div>
+    </form>
 
   {{-- Table --}}
   <div class="overflow-x-auto bg-white rounded-2xl border shadow-sm">
@@ -131,8 +132,15 @@
           </div>
           <div class="md:col-span-2">
             <label class="block text-sm mb-1">Employee (optional)</label>
-            <input type="number" class="w-full border rounded-lg px-3 py-2"
-                   name="id_employee" x-model="form.id_employee" placeholder="Employee ID">
+            <select name="id_employee" x-model="form.id_employee" class="w-full border rounded-lg px-3 py-2">
+            <option value="">— Select —</option>
+            @foreach($employees as $emp)
+                <option value="{{ $emp->id }}"
+                @if(old('id_employee', $user->id_employee ?? '') == $emp->id) selected @endif>
+                {{ $emp->name }}
+                </option>
+            @endforeach
+            </select>
           </div>
           <div class="md:col-span-2">
             <label class="block text-sm mb-1" x-text="isEdit ? 'Password (leave blank to keep current)' : 'Password'"></label>

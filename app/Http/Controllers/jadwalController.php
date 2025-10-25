@@ -35,7 +35,7 @@ class jadwalController extends Controller
 
         if ($hasSaved) {
             // 🔹 Ambil jadwal langsung dari database
-            $flat = Schedules::with(['branches:id,name', 'employees:id,name'])
+            $flat = Schedules::with(['branches:id,name', 'employees:id,name,id_role'])
                 ->whereBetween('date', [$firstDay, $lastDay])
                 ->orderBy('date')
                 ->get();
@@ -54,6 +54,7 @@ class jadwalController extends Controller
                     'tahun'        => Carbon::parse($r->date)->year,
                     'shift'        => $r->shift,
                     'libur'        => (bool) $r->is_vacation,
+                    'id_role'      => $r->employees->id_role
                 ];
             })->toArray();
 
@@ -93,10 +94,10 @@ class jadwalController extends Controller
                 'nama_karyawan' => $row['karyawan'] ?? '-',
                 'libur'         => (bool)($row['libur'] ?? false),
                 'id_karyawan'   => $row['id_karyawan'] ?? null,
+                'id_role'       => $row['id_role'] ?? null
             ];
         }
-        ksort($cal);
-
+        
         foreach ($cal as &$branches) {
             uksort($branches, function ($a, $b) {
                 // extract number if exists (e.g., "Cabang 2" -> 2)
@@ -110,9 +111,20 @@ class jadwalController extends Controller
                     ? strnatcasecmp($a, $b)
                     : ($numA <=> $numB);
             });
-        }
-        unset($branches);
 
+            // After sorting branches, sort employees by id_role within each shift
+            foreach ($branches as &$shifts) {
+                foreach ($shifts as &$employees) {
+                    // Sort employees by id_role (ascending)
+                    usort($employees, function($a, $b) {
+                        return $a['id_role'] <=> $b['id_role'];
+                    });
+                }
+            }
+        }
+        ksort($cal);
+        unset($branches);
+        
         return $cal;
     }
 
@@ -370,7 +382,7 @@ class jadwalController extends Controller
         $lastDay  = $firstDay->copy()->endOfMonth();
 
         // Ambil jadwal sebulan dari DB
-        $flat = Schedules::with(['branches:id,name','employees:id,name'])
+        $flat = Schedules::with(['branches:id,name','employees:id,name,id_role'])
             ->whereBetween('date', [$firstDay->toDateString(), $lastDay->toDateString()])
             ->orderBy('date')
             ->get();
@@ -389,6 +401,7 @@ class jadwalController extends Controller
                 'tahun'        => (int)$d->year,
                 'shift'        => $r->shift,                // 'Pagi' / 'Siang'
                 'libur'        => (bool)$r->is_vacation,
+                'id_role'      => $r->employees->id_role
             ];
         })->toArray();
 

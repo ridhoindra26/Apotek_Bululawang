@@ -6,3 +6,6 @@ import './attendance';
 import './attendance-camera';
 import './attendance-photo';
 import './attendance-minutes';
+import './accountPage';
+import './cabang.index';
+import './pasangan.index';

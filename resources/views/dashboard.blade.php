@@ -11,6 +11,11 @@
     now()->hour < 18 => 'Selamat Sianggg',
     default => 'Selamat Malammm',
   };
+
+  $isPositive = $balance_minutes > 0;
+  $isNegative = $balance_minutes < 0;
+  $hours = floor(abs($balance_minutes) / 60);
+  $minutes = abs($balance_minutes) % 60;
 @endphp
 
 <div class="mx-auto w-full max-w-4xl px-4 sm:px-6">
@@ -39,7 +44,7 @@
     </div>
 
     {{-- STATUS SUMMARY --}}
-    <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
       <div class="rounded-xl border border-slate-200 p-3 text-center bg-slate-50">
         <p class="text-xs text-slate-500">Check-In</p>
         <p class="font-semibold text-slate-800">
@@ -59,7 +64,7 @@
         </p>
       </div>
       <div class="rounded-xl border border-slate-200 p-3 text-center bg-slate-50">
-        <p class="text-xs text-slate-500">Durasi Kerja</p>
+        <p class="text-xs text-slate-500">Work Duration</p>
         <p class="font-semibold text-slate-800">
           {{ $attendanceToday?->work_minutes ? sprintf('%02d:%02d', floor($attendanceToday->work_minutes / 60), $attendanceToday->work_minutes % 60) : '—' }}
         </p>
@@ -72,7 +77,23 @@
     {{-- ACTION BUTTONS --}}
     {{-- @dd(auth()->user()) --}}
     @if(auth()->user()->id_employee)
-      <div class="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+    <div class="mt-3 grid grid-cols-1 sm:grid-cols-1">
+      <div class="rounded-xl border p-3 text-center 
+          {{ $isPositive ? 'bg-emerald-50 border-emerald-200' : ($isNegative ? 'bg-rose-50 border-rose-200' : 'bg-slate-50 border-slate-200') }}">
+        <p class="text-xs text-slate-500">Time Balance</p>
+        <p class="font-semibold mb-0
+            {{ $isPositive ? 'text-emerald-700' : ($isNegative ? 'text-rose-700' : 'text-slate-500') }}">
+          @if ($isPositive)
+            +{{ sprintf('%02d:%02d', $hours, $minutes) }} <span class="text-xs font-normal">(Lembur)</span>
+          @elseif ($isNegative)
+            -{{ sprintf('%02d:%02d', $hours, $minutes) }} <span class="text-xs font-normal">(Hutang)</span>
+          @else
+            {{ sprintf('%02d:%02d', $hours, $minutes) }}
+          @endif
+        </p>
+      </div>
+    </div>
+      <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <button id="checkin-button-desktop"
                 class="hidden sm:inline-flex w-full items-center justify-center !rounded-md bg-[#318f8c] px-6 py-3 text-white font-semibold hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#318f8c]/40 active:opacity-100 transition-all">
           Check-In
@@ -102,7 +123,7 @@
             <th class="py-2 pr-4">Tanggal</th>
             <th class="py-2 pr-4">Check-In</th>
             <th class="py-2 pr-4">Check-Out</th>
-            <th class="py-2 pr-4">Durasi</th>
+            <th class="py-2 pr-4">Duration</th>
             <th class="py-2 pr-4">Status</th>
           </tr>
         </thead>

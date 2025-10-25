@@ -165,17 +165,11 @@ Route::middleware(['auth', 'single.session'])->group(function () {
 
         Route::controller(UserController::class)->group(function () {
             Route::get('/accounts', 'index')->name('accounts.index');
+            Route::get('/users/modal/{id?}', 'getUserDataForModal')->name('accounts.modal');
             Route::post('/accounts', 'store')->name('accounts.store');
             Route::patch('/accounts/{user}', 'update')->name('accounts.update');
             Route::delete('/accounts/{user}', 'destroy')->name('accounts.destroy');
         });
-
-        // Route::middleware(['auth'])->group(function () {
-        //     Route::get('/accounts', [AccountController::class, 'index'])->name('accounts.index');
-        //     Route::post('/accounts', [AccountController::class, 'store'])->name('accounts.store');
-        //     Route::patch('/accounts/{user}', [AccountController::class, 'update'])->name('accounts.update');
-        //     Route::delete('/accounts/{user}', [AccountController::class, 'destroy'])->name('accounts.destroy');
-        // });
 
     });
 
