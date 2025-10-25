@@ -222,7 +222,7 @@
                                                         <li class="flex items-center gap-2 text-sm">
                                                             <span class="w-2.5 h-2.5 rounded-full {{ $dotClass }}"></span>
                                                             <span class="{{ $isLibur ? 'text-red-600' : '' }}">
-                                                                {{ $empName }}
+                                                                {{ $empName }} - {{ $employee['id_role'] ?? '' }}
                                                             </span>
                                                         </li>
                                                     @endforeach

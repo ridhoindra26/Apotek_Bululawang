@@ -12,7 +12,7 @@ class branchesController extends Controller
      */
     public function index()
     {
-        $cabangs = Branches::all();
+        $cabangs = Branches::paginate(10);
         return view('karyawan.cabang', compact('cabangs'));
         
     }
