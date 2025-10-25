@@ -64,7 +64,7 @@
         </p>
       </div>
       <div class="rounded-xl border border-slate-200 p-3 text-center bg-slate-50">
-        <p class="text-xs text-slate-500">Durasi Kerja</p>
+        <p class="text-xs text-slate-500">Work Duration</p>
         <p class="font-semibold text-slate-800">
           {{ $attendanceToday?->work_minutes ? sprintf('%02d:%02d', floor($attendanceToday->work_minutes / 60), $attendanceToday->work_minutes % 60) : '—' }}
         </p>
@@ -80,7 +80,7 @@
     <div class="mt-3 grid grid-cols-1 sm:grid-cols-1">
       <div class="rounded-xl border p-3 text-center 
           {{ $isPositive ? 'bg-emerald-50 border-emerald-200' : ($isNegative ? 'bg-rose-50 border-rose-200' : 'bg-slate-50 border-slate-200') }}">
-        <p class="text-xs text-slate-500">Saldo Waktu</p>
+        <p class="text-xs text-slate-500">Time Balance</p>
         <p class="font-semibold mb-0
             {{ $isPositive ? 'text-emerald-700' : ($isNegative ? 'text-rose-700' : 'text-slate-500') }}">
           @if ($isPositive)
@@ -123,7 +123,7 @@
             <th class="py-2 pr-4">Tanggal</th>
             <th class="py-2 pr-4">Check-In</th>
             <th class="py-2 pr-4">Check-Out</th>
-            <th class="py-2 pr-4">Durasi</th>
+            <th class="py-2 pr-4">Duration</th>
             <th class="py-2 pr-4">Status</th>
           </tr>
         </thead>

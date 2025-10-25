@@ -18,7 +18,7 @@
           id="logout-button"
           class="px-3 py-2 !rounded-md bg-[#318f8c] text-white text-sm font-semibold hover:opacity-90"
         >
-          Keluar
+          Logout
         </button>
       </form>
 
