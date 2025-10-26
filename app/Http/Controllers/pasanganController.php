@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Roles;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class pasanganController extends Controller
 {
@@ -12,8 +13,10 @@ class pasanganController extends Controller
      */
     public function index()
     {
-        $pasangans = Roles::all();
-        return view('karyawan.pasangan', compact('pasangans'));
+        $pasangans = Roles::orderBy('index')->get();
+        $indexChoices = range(1, $pasangans->count());
+
+        return view('karyawan.pasangan', compact('pasangans', 'indexChoices'));
     }
 
     /**
@@ -33,8 +36,11 @@ class pasanganController extends Controller
         'name' => 'required|string|max:255',
     ]);
 
+    $nextIndex = Roles::max('index') + 1;
+
     Roles::create([
         'name' => $request->input('name'),
+        'index' => $nextIndex,
     ]);
 
     return redirect()->route('pasangan.index')->with('success', 'Pasangan created successfully.');
@@ -64,12 +70,25 @@ class pasanganController extends Controller
     {
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
+            'index' => 'required|integer',
         ]);
 
         $pasangan = Roles::findOrFail($id);
-        $pasangan->update([
-            'name' => $request->input('name'),
-        ]);
+        $newIndex = $validatedData['index'];
+        $oldIndex = $pasangan->index;
+
+        DB::transaction(function () use ($pasangan, $newIndex, $oldIndex, $validatedData) {
+            $existing = Roles::where('index', $newIndex)->first();
+
+            if ($existing && $existing->id !== $pasangan->id) {
+                $existing->update(['index' => $oldIndex]);
+            }
+
+            $pasangan->update([
+                'name'  => $validatedData['name'],
+                'index' => $newIndex,
+            ]);
+        });
 
         return redirect()->route('pasangan.index')->with('success', 'Pasangan updated successfully.');
         

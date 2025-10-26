@@ -13,6 +13,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const cameraInput = document.getElementById("camera-input");
 
+  // Buttons to toggle disabled state during loading
+  const ACTION_IDS = [
+    "checkin-button",
+    "checkout-button",
+    "checkin-button-desktop",
+    "checkout-button-desktop",
+  ];
+  const ACTION_BTNS = ACTION_IDS
+    .map((id) => document.getElementById(id))
+    .filter(Boolean);
+
+  const setButtonsDisabled = (disabled) => {
+    ACTION_BTNS.forEach((btn) => {
+      btn.disabled = disabled;
+      btn.classList.toggle("opacity-60", disabled);
+      btn.classList.toggle("pointer-events-none", disabled);
+    });
+  };
+
   async function captureAndSubmit(type) {
     return new Promise((resolve) => {
       // Trigger camera
@@ -33,42 +52,67 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         if (confirm.isConfirmed) {
-          // Send via fetch
+          // Prepare form data
           const formData = new FormData();
           formData.append("photo", file);
           formData.append("_token", document.querySelector('meta[name="csrf-token"]').content);
 
+          // Optional: timeout protection
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 30000); // 30s
+
           try {
-          console.log("FormData:", Object.fromEntries(formData));
-            
+            setButtonsDisabled(true);
+
+            // SHOW LOADING (do NOT await)
+            Swal.fire({
+              title: "Uploading...",
+              html: "Please wait a moment.",
+              allowOutsideClick: false,
+              allowEscapeKey: false,
+              didOpen: () => {
+                Swal.showLoading();
+              },
+            });
+
+            // Optional: timeout protection
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 30000); // 30s
+
             const res = await fetch(`/attendance/${type}`, {
               method: "POST",
               body: formData,
+              signal: controller.signal,
             });
 
+            clearTimeout(timeout);
             const data = await res.json().catch(() => ({}));
+
+            // CLOSE LOADING before next dialog
+            if (Swal.isLoading()) Swal.close();
+
             if (res.ok) {
-              console.log(data);
-              
               await Swal.fire({
                 icon: "success",
                 title: `${type} success`,
                 text: data.message ?? "Upload success",
                 confirmButtonColor: "#318f8c",
-              }).then(() => window.location.reload());
+              });
+              window.location.reload();
             } else {
-              console.error("Error Response:", data);
               throw new Error(data.message ?? "Upload failed");
             }
           } catch (err) {
-            console.log(err);
-            
-            Swal.fire({
+            if (Swal.isLoading()) Swal.close();
+            await Swal.fire({
               icon: "error",
               title: "Error",
-              text: err.message,
+              text: err.name === "AbortError" ? "Request timed out. Please try again." : (err.message || "Unexpected error"),
               confirmButtonColor: "#318f8c",
-            }).then(() => window.location.reload());
+            });
+            window.location.reload();
+          } finally {
+            setButtonsDisabled(false);
           }
         }
 

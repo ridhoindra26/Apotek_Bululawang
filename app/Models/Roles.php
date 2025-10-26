@@ -11,7 +11,7 @@ class Roles extends Model
 
     protected $table = 'roles';
 
-    protected $fillable = ['name'];
+    protected $fillable = ['name', 'index'];
 
     public function employees()
     {

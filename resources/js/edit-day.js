@@ -80,6 +80,51 @@ function nextShiftTimeId(shift, currentId) {
   return list[nextIdx].id;
 }
 
+// NEW: get role index for an employee from BRANCH_CACHE
+function getRoleIndex(empId) {
+  for (const b of BRANCH_CACHE) {
+    const e = (b.employees || []).find(x => String(x.id) === String(empId));
+    if (e) {
+      // try common shapes coming from backend
+      const v =
+        e.role_index ??
+        e.roleIndex ??
+        e.role?.index ??
+        e.roles?.index ??
+        e.index_role ??
+        e.index; // last resort if your employee object already carries index
+      if (v !== undefined && v !== null) return Number(v);
+    }
+  }
+  // fallback: very large so they sink to bottom
+  return 999999;
+}
+
+// NEW: comparator & sorters
+function compareByRoleIndex(a, b) {
+  const ai = a.role_index ?? 999999;
+  const bi = b.role_index ?? 999999;
+  if (ai !== bi) return ai - bi;
+  // tie-break by name then id
+  const an = (a.name || "").toString();
+  const bn = (b.name || "").toString();
+  const byName = an.localeCompare(bn, undefined, { sensitivity: "base" });
+  if (byName !== 0) return byName;
+  return String(a.id_employee).localeCompare(String(b.id_employee));
+}
+
+function sortBucket(branchId, shift) {
+  const list = SCHEDULE[branchId]?.[shift];
+  if (Array.isArray(list)) list.sort(compareByRoleIndex);
+}
+
+function sortAllBuckets() {
+  Object.keys(SCHEDULE).forEach(bid => {
+    ["Pagi","Siang"].forEach(s => sortBucket(bid, s));
+  });
+}
+
+
 /* =========================
    Board init & render
    ========================= */
@@ -90,6 +135,7 @@ function initBoard(items) {
 }
 
 function renderBoard() {
+  sortAllBuckets();
   const body = document.getElementById("editDayBody");
   body.innerHTML = "";
 
@@ -232,8 +278,9 @@ function moveEmployee(empId, fromBranchId, fromShift, toBranchId, toShift) {
     name: findEmpName(empId) || `Emp ${empId}`,
     is_vacation: getEmployeeVacation(empId),
     id_shift_time: fallbackId, // assign default variant for the target shift
+    role_index: getRoleIndex(empId),
   });
-
+  sortBucket(toBranchId, toShift);
   renderBoard();
 }
 
@@ -280,8 +327,10 @@ function buildSchedule(branches, items) {
         id_employee: it.id_employee,
         name: it.employee || `Emp ${it.id_employee}`,
         is_vacation: !!it.is_vacation,
-        id_shift_time: stId, // keep/assign
+        id_shift_time: stId,
+        role_index: getRoleIndex(it.id_employee),
       });
+      sortBucket(bid, shift);
       placed.add(String(it.id_employee));
     }
   });
@@ -299,7 +348,9 @@ function buildSchedule(branches, items) {
         name: e.name,
         is_vacation: getEmployeeVacation(e.id),
         id_shift_time: defaultShiftTimeId('Pagi'),
+        role_index: getRoleIndex(e.id)
       });
+      sortBucket(bid, 'Pagi');
       placed.add(empId);
     });
   });
