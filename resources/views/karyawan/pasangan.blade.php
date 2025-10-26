@@ -30,7 +30,7 @@
             <table class="table table-striped align-middle">
                 <thead>
                     <tr>
-                        <th>ID</th>
+                        <th>Index</th>
                         <th>Nama Pasangan</th>
                         <th>Created At</th>
                         <th>Updated At</th>
@@ -40,7 +40,7 @@
                 <tbody>
                     @foreach ($pasangans as $pasangan)
                     <tr>
-                        <td>{{ $pasangan->id }}</td>
+                        <td>{{ $pasangan->index }}</td>
                         <td>{{ $pasangan->name }}</td>
                         <td>{{ $pasangan->created_at }}</td>
                         <td>{{ $pasangan->updated_at }}</td>
@@ -49,7 +49,8 @@
                                 type="button"
                                 class="btn btn-warning btn-sm js-edit-pasangan"
                                 data-id="{{ $pasangan->id }}"
-                                data-name="{{ $pasangan->name }}">
+                                data-name="{{ $pasangan->name }}"
+                                data-index="{{ $pasangan->index }}">
                                 Edit
                             </button>
 

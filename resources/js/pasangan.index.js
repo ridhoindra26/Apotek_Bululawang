@@ -4,6 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const modal = document.getElementById("editModal");
   const form = document.getElementById("editForm");
   const nameInput = document.getElementById("editName");
+  const indexSelect = document.getElementById("editIndex");
   const closeBtn = document.getElementById("editModalCloseBtn");
   const cancelBtn = document.getElementById("editModalCancelBtn");
 
@@ -21,9 +22,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const id = btn.getAttribute("data-id");
     const name = btn.getAttribute("data-name");
+    const index = btn.getAttribute("data-index") || "";
 
     form.setAttribute("action", `/pasangan/${id}`);
-    nameInput.value = name;
+    if (nameInput) nameInput.value = name;
+    if (indexSelect) indexSelect.value = String(index);
     openModal();
   });
 

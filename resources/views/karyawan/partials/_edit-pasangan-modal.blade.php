@@ -26,6 +26,17 @@
                    class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm
                           focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
           </div>
+          <div class="mb-3">
+            <label for="editIndex" class="block text-sm font-medium text-gray-700">Urutan (Index)</label>
+            <select id="editIndex" name="index"
+                    class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm
+                          focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
+              @foreach ($indexChoices as $i)
+                <option value="{{ $i }}">{{ $i }}</option>
+              @endforeach
+            </select>
+          </div>
+
           <div class="flex gap-2">
             <button type="submit"
                     class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">

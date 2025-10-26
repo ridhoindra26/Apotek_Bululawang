@@ -35,7 +35,7 @@ class jadwalController extends Controller
 
         if ($hasSaved) {
             // 🔹 Ambil jadwal langsung dari database
-            $flat = Schedules::with(['branches:id,name', 'employees:id,name,id_role'])
+            $flat = Schedules::with(['branches:id,name', 'employees:id,name,id_role', 'employees.roles:id,index'])
                 ->whereBetween('date', [$firstDay, $lastDay])
                 ->orderBy('date')
                 ->get();
@@ -54,7 +54,7 @@ class jadwalController extends Controller
                     'tahun'        => Carbon::parse($r->date)->year,
                     'shift'        => $r->shift,
                     'libur'        => (bool) $r->is_vacation,
-                    'id_role'      => $r->employees->id_role
+                    'id_role'      => $r->employees->roles?->index
                 ];
             })->toArray();
 
@@ -382,7 +382,7 @@ class jadwalController extends Controller
         $lastDay  = $firstDay->copy()->endOfMonth();
 
         // Ambil jadwal sebulan dari DB
-        $flat = Schedules::with(['branches:id,name','employees:id,name,id_role'])
+        $flat = Schedules::with(['branches:id,name','employees:id,name,id_role','employees.roles:id,index'])
             ->whereBetween('date', [$firstDay->toDateString(), $lastDay->toDateString()])
             ->orderBy('date')
             ->get();
@@ -401,7 +401,7 @@ class jadwalController extends Controller
                 'tahun'        => (int)$d->year,
                 'shift'        => $r->shift,                // 'Pagi' / 'Siang'
                 'libur'        => (bool)$r->is_vacation,
-                'id_role'      => $r->employees->id_role
+                'id_role'      => $r->employees->roles?->index
             ];
         })->toArray();
 
@@ -428,7 +428,7 @@ class jadwalController extends Controller
         }
 
         // Get all rows on that date
-        $rows = Schedules::with(['branches:id,name','employees:id,name', 'shiftTime:id,group,code,start_time,end_time'])
+        $rows = Schedules::with(['branches:id,name','employees:id,name,id_role', 'employees.roles:id,index', 'shiftTime:id,group,code,start_time,end_time'])
             ->whereDate('date', $date)
             ->orderBy('id_branch')
             ->orderByRaw("CASE WHEN shift = 'Pagi' THEN 0 ELSE 1 END")
@@ -444,6 +444,7 @@ class jadwalController extends Controller
                     'id_shift_time'  => $r->id_shift_time,
                     'shift_time_code' => $r->shiftTime?->code,
                     'is_vacation'    => (bool)$r->is_vacation,
+                    'role_index'     => $r->employees->roles?->index
                 ];
             })->values();
 
