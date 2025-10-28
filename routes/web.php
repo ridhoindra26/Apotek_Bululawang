@@ -11,6 +11,7 @@ use App\Http\Controllers\pasanganController;
 use App\Http\Controllers\dashboardController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\TimeBalanceController;
 
 Route::get('/', function () {
     return redirect()->route('auth.index');
@@ -202,6 +203,22 @@ Route::middleware(['auth', 'single.session'])->group(function () {
             Route::get('/admin/attendances/{attendance}/{type}/photo', 'photoUrl')
                 ->where('type', 'check_in|check_out')
                 ->name('attendances.photoUrl');
+        });
+    });
+
+    /**
+     * Laporan time balances
+     * - admin pages: superadmin & admin
+     */
+
+    Route::controller(timeBalanceController::class)->group(function () {
+        Route::middleware('role:superadmin,admin')->group(function () {
+            Route::get('/admin/timebalances', 'index')->name('attendances.balance');
+            Route::get('/admin/timebalances/{id}', 'show')->name('attendances.balance.show');
+            Route::post('/admin/timebalances/{id}', 'adjust')->name('attendances.balance.adjust');
+            // Route::get('/admin/timebalances/{timebalance}/{type}/photo', 'photoUrl')
+            //     ->where('type', 'check_in|check_out')
+            //     ->name('timebalances.photoUrl');
         });
     });
 

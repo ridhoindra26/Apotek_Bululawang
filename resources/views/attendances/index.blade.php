@@ -1,14 +1,46 @@
 @extends('layout.layout')
 @section('title','Attendances')
+@section('page_title','Attendances')
 
 @section('content')
 <div class="container-fluid mx-auto sm:px-6">
   <div class="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
 
+    {{-- BREADCRUMB --}}
+    <nav class="flex items-center justify-between mb-4 text-sm text-slate-600">
+      {{-- <ol class="flex items-center space-x-2">
+        <li>
+          <a href="{{ route('dashboard') }}" class="hover:text-[#318f8c] font-medium">Dashboard</a>
+        </li>
+        <li>/</li>
+        <li>
+          <a href="{{ route('attendances.index') }}" class="hover:text-[#318f8c] font-medium">Attendances</a>
+        </li>
+        @if(request()->routeIs('attendances.balance'))
+          <li>/</li>
+          <li class="text-slate-400">Time Balance</li>
+        @endif
+      </ol> --}}
+
+      {{-- Submenu (toggle) --}}
+      <div class="flex space-x-2">
+        <a href="{{ route('attendances.index') }}"
+          class="px-3 py-1.5 rounded-lg border text-sm font-medium
+                  {{ request()->routeIs('attendances.index') ? 'bg-[#318f8c] text-white border-[#318f8c]' : 'border-slate-200 hover:bg-slate-50' }}">
+          Attendance List
+        </a>
+        <a href="{{ route('attendances.balance') }}"
+          class="px-3 py-1.5 rounded-lg border text-sm font-medium
+                  {{ request()->routeIs('attendances.balance') ? 'bg-[#318f8c] text-white border-[#318f8c]' : 'border-slate-200 hover:bg-slate-50' }}">
+          Time Balance
+        </a>
+      </div>
+    </nav>
+
     {{-- FILTERS --}}
     <form method="GET" class="grid gap-3 sm:grid-cols-6 mb-4">
       <input type="text" name="q" value="{{ $qName }}" placeholder="Search employee..."
-             class="sm:col-span-2 rounded-lg border border-slate-200 px-3 py-2 focus:border-[#318f8c] focus:ring-0">
+             class=" rounded-lg border border-slate-200 px-3 py-2 focus:border-[#318f8c] focus:ring-0">
       <select name="branch" class="rounded-lg border border-slate-200 px-3 py-2 focus:border-[#318f8c] focus:ring-0">
         <option value="">All branches</option>
         @foreach($branches as $b)
@@ -25,7 +57,7 @@
         <option value="absent"  @selected($status==='absent')>absent</option>
         <option value="late"    @selected($status==='late')>late</option>
       </select>
-      <button class="rounded-lg bg-[#318f8c] px-4 py-2 text-white font-semibold">Filter</button>
+      <button class="!rounded-md bg-[#318f8c] px-4 py-2 text-white font-semibold">Filter</button>
     </form>
 
     {{-- TABLE --}}
@@ -94,7 +126,7 @@
                 <button type="button"
                         class="rounded-full border px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
                         onclick="openMinutesPanel({{ $a->id }})">
-                  Confirm
+                  {{ $a->is_confirmed ? 'Edit' : 'Confirm' }}
                 </button>
               </td>
             </tr>

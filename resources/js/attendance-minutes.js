@@ -38,7 +38,7 @@ import Swal from "sweetalert2";
       if (!res.ok || !json?.ok) throw new Error(json?.message || 'Failed to load');
 
       const a = json.attendance;
-      state = { id:a.id, cap:a.overtime_minutes ?? 0, suggest:json.suggestions || {penalty:0,overtime:0}, saveUrl:base };
+      state = { id:a.id, cap:((a.overtime_minutes ?? 0) + (a.early_checkin_minutes ?? 0)), suggest:json.suggestions || {penalty:0,overtime:0}, saveUrl:base };
 
       els.meta.textContent = `${a.employee ?? 'Employee'} • ${a.branch ?? '-'} • ${a.date ?? '-'}`;
       els.id.value = a.id;
@@ -48,7 +48,7 @@ import Swal from "sweetalert2";
       els.ot.textContent = a.overtime_minutes;
 
       els.penalty.value = a.penalty_minutes || state.suggest.penalty || 0;
-      els.penaltyHint.textContent = `Suggestion: ${state.suggest.penalty} min (Late + Early Leave − Early Check-in).`;
+      els.penaltyHint.textContent = `Suggestion: ${state.suggest.penalty} min (Late + Early Leave).`;
       els.otApplied.value = a.overtime_applied_minutes || state.suggest.overtime || 0;
       els.otApplied.max = state.cap;
       els.otHint.textContent = `Total overtime: ${state.cap} min.`;
@@ -90,9 +90,9 @@ import Swal from "sweetalert2";
       
       if (!res.ok || !json?.ok) throw new Error(json?.message || 'Failed to save');
       Swal.fire({ icon:'success', title:'Saved', timer:1200, showConfirmButton:false });
-      hidePanel();
+      window.location.reload();
     } catch (err) {
       Swal.fire({ icon:'error', title:'Error', text: err.message || 'Cannot save', confirmButtonColor:'#318f8c' });
-    }
+    } 
   });
 })();
