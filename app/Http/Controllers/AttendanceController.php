@@ -323,7 +323,7 @@ class AttendanceController extends Controller
             ->when($status, fn($q) => $q->where('status', $status))
             ->when($from, fn($q) => $q->whereDate('work_date','>=',$from))
             ->when($to, fn($q) => $q->whereDate('work_date','<=',$to))
-            ->orderByDesc('work_date')
+            ->orderByDesc('created_at')
             ->orderBy('id_employee')
             ->paginate(12)
             ->withQueryString();
@@ -339,12 +339,10 @@ class AttendanceController extends Controller
         // $this->authorize('view', $attendance); // optional
 
         $penaltySuggested = max(
-            (($attendance->late_minutes ?? 0) * 45)
-            + ($attendance->early_leave_minutes ?? 0)
-            - ($attendance->early_checkin_minutes ?? 0),
-            0
+            (($attendance->late_minutes ?? 0) * 1) //Rumus penalty
+            + ($attendance->early_leave_minutes ?? 0),0
         );
-        $overtimeSuggested = $attendance->overtime_minutes ?? 0;
+        $overtimeSuggested = ($attendance->overtime_minutes ?? 0) + ($attendance->early_checkin_minutes ?? 0);
 
         return response()->json([
             'ok' => true,
@@ -407,6 +405,8 @@ class AttendanceController extends Controller
             // --- Update attendance
             $attendance->penalty_minutes = $newPenalty;
             $attendance->overtime_applied_minutes = $newOT;
+            $attendance->notes = $data['note'];
+            $attendance->is_confirmed = true;
             $attendance->save();
 
             // --- Calculate deltas
