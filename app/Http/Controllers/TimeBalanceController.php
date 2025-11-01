@@ -8,6 +8,8 @@ use App\Models\TimeBalances;
 use App\Models\TimeLedgers;
 use App\Models\Employees;
 
+use Illuminate\Support\Facades\DB;
+
 class TimeBalanceController extends Controller
 {
     /**
@@ -57,23 +59,93 @@ class TimeBalanceController extends Controller
      */
     public function adjust(Request $request, int $id)
     {
-        return back()->with('success', 'Sorry this feature is not yet implemented.');
-        $employeeId = $id;
-        $employee = Employees::findOrFail($employeeId);
-        $balance = TimeBalances::where('id_employee', $employeeId)->first();
+        // return back()->with('success', 'Sorry this feature is not yet implemented.');
+        $employee = Employees::findOrFail($id);
 
-        $request->validate([
-            'debit_minutes' => ['required', 'integer', 'min:0'],
-            'credit_minutes' => ['required', 'integer', 'min:0'],
+        $data = $request->validate([
+            'penalty_minutes'          => ['required', 'integer', 'min:0'],
+            'overtime_applied_minutes' => ['required', 'integer', 'min:0'],
+            'note'                     => ['required', 'string', 'max:500'],
         ]);
+        
+        $penalty  = (int) $data['penalty_minutes'];
+        $ot       = (int) $data['overtime_applied_minutes'];
+        $note     = $data['note'];
+        $today    = now()->toDateString();
+        
+        if ($penalty === 0 && $ot === 0) {
+            return back()->with('error', 'Penalty and overtime cannot be both 0.');
+        }
 
-        DB::transaction(function () use ($balance, $request) {
-            $balance->debt_minutes += $request->debit_minutes;
-            $balance->credit_minutes += $request->credit_minutes;
+        DB::transaction(function () use ($employee, $penalty, $ot, $note, $today) {
+            // Ensure balance exists
+            $balance = TimeBalances::firstOrCreate(
+                ['id_employee' => $employee->id],
+                ['debt_minutes' => 0, 'credit_minutes' => 0]
+            );
+
+            // Apply increments (only if > 0)
+            if ($penalty > 0) {
+                $balance->debt_minutes += $penalty;
+            }
+            if ($ot > 0) {
+                $balance->credit_minutes += $ot;
+            }
             $balance->save();
+
+            // Ledger entries (only when something changed)
+            $noteExtra = $note ? " | $note" : '';
+
+            if ($penalty > 0) {
+                TimeLedgers::create([
+                    'id_employee'   => $employee->id,
+                    'work_date'     => $today,
+                    'id_attendance' => null,
+                    'type'          => 'penalty_add',
+                    'minutes'       => $penalty,
+                    'source'        => 'manual_adjust',
+                    'note'          => "Penalty added: +{$penalty} min{$noteExtra}",
+                ]);
+            }
+
+            if ($ot > 0) {
+                TimeLedgers::create([
+                    'id_employee'   => $employee->id,
+                    'work_date'     => $today,
+                    'id_attendance' => null,
+                    'type'          => 'overtime_add',
+                    'minutes'       => $ot,
+                    'source'        => 'manual_adjust',
+                    'note'          => "Overtime added: +{$ot} min{$noteExtra}",
+                ]);
+            }
         });
 
-        return redirect()->route('attendances.timebalances.show', ['id' => $employeeId])
-            ->with('success', 'Time balance adjusted.');
+        return back()->with('success', 'Time balance adjusted.');
+    }
+
+    /**
+     * Show ledger entries by employee id.
+     *
+     * @param Request $request
+     * @param int $id
+     * @return \Illuminate\Http\Response
+     */
+    public function showLedger(Request $request, int $id)
+    {
+        $employee = Employees::findOrFail($id);
+        $ledgers = TimeLedgers::where('id_employee', $id)
+            ->when($request->from, fn($q) => $q->whereDate('work_date', '>=', $request->from))
+            ->when($request->to, fn($q) => $q->whereDate('work_date', '<=', $request->to))
+            ->when($request->type, fn($q) => $q->where('type', $request->type))
+            ->orderByDesc('created_at')
+            ->paginate(10);
+
+        return view('attendances.timebalances.show_ledger', compact('employee', 'ledgers'))
+            ->with([
+                'from' => $request->from,
+                'to'   => $request->to,
+                'type' => $request->type,
+            ]);
     }
 }
