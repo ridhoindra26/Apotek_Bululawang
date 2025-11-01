@@ -24,13 +24,13 @@
 
       <div>
         <label class="block text-sm !text-emerald-700 mb-1">Credit Minutes</label>
-        <input type="number" name="penalty_minutes" min="0" required
+        <input type="number" name="overtime_applied_minutes" min="0" required
                class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-[#318f8c] focus:ring-0">
       </div>
 
       <div>
         <label class="block text-sm !text-rose-700 mb-1">Debt Minutes</label>
-        <input type="number" name="overtime_applied_minutes" min="0" required
+        <input type="number" name="penalty_minutes" min="0" required
                class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-[#318f8c] focus:ring-0">
       </div>
 

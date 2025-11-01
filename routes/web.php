@@ -212,6 +212,10 @@ Route::middleware(['auth', 'single.session'])->group(function () {
      */
 
     Route::controller(timeBalanceController::class)->group(function () {
+        Route::middleware('role:user')->group(function () {
+            
+        });
+
         Route::middleware('role:superadmin,admin')->group(function () {
             Route::get('/admin/timebalances', 'index')->name('attendances.balance');
             Route::get('/admin/timebalances/{id}', 'show')->name('attendances.balance.show');
