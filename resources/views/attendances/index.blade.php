@@ -51,12 +51,12 @@
              class="rounded-lg border border-slate-200 px-3 py-2 focus:border-[#318f8c] focus:ring-0">
       <input type="date" name="to" value="{{ $to }}"
              class="rounded-lg border border-slate-200 px-3 py-2 focus:border-[#318f8c] focus:ring-0">
-      <select name="status" class="rounded-lg border border-slate-200 px-3 py-2 focus:border-[#318f8c] focus:ring-0">
+      {{-- <select name="status" class="rounded-lg border border-slate-200 px-3 py-2 focus:border-[#318f8c] focus:ring-0">
         <option value="">All status</option>
         <option value="present" @selected($status==='present')>present</option>
         <option value="absent"  @selected($status==='absent')>absent</option>
         <option value="late"    @selected($status==='late')>late</option>
-      </select>
+      </select> --}}
       <button class="!rounded-md bg-[#318f8c] px-4 py-2 text-white font-semibold">Filter</button>
     </form>
 
@@ -71,10 +71,10 @@
             <th class="py-2 pr-4">In</th>
             <th class="py-2 pr-4">Out</th>
             <th class="py-2 pr-4">Work</th>
-            <th class="py-2 pr-4">Late</th>
-            <th class="py-2 pr-4">Early L.</th>
-            <th class="py-2 pr-4">Early In</th>
-            <th class="py-2 pr-4">Overtime</th>
+            <th class="py-2 pr-4 text-rose-700">Late</th>
+            <th class="py-2 pr-4 text-rose-700">Early L.</th>
+            <th class="py-2 pr-4 text-emerald-700">Early In</th>
+            <th class="py-2 pr-4 text-emerald-700">Overtime</th>
             <th class="py-2 pr-4">Actions</th>
           </tr>
         </thead>
@@ -125,7 +125,7 @@
               <td class="py-2 pr-4">
                 <button type="button"
                         class="rounded-full border px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
-                        onclick="openMinutesPanel({{ $a->id }})">
+                        onclick="handleMinutesPanel({{ $a->id }}, {{ $a->is_confirmed ? 1 : 0 }})">
                   {{ $a->is_confirmed ? 'Edit' : 'Confirm' }}
                 </button>
               </td>

@@ -16,6 +16,10 @@
   $isNegative = $balance_minutes < 0;
   $hours = floor(abs($balance_minutes) / 60);
   $minutes = abs($balance_minutes) % 60;
+
+  // Simple helpers for badge styling
+  $balanceBox = $isPositive ? 'bg-emerald-50 border-emerald-200' : ($isNegative ? 'bg-rose-50 border-rose-200' : 'bg-slate-50 border-slate-200');
+  $balanceText = $isPositive ? 'text-emerald-700' : ($isNegative ? 'text-rose-700' : 'text-slate-500');
 @endphp
 
 <div class="mx-auto w-full max-w-4xl px-4 sm:px-6">
@@ -78,20 +82,24 @@
     {{-- @dd(auth()->user()) --}}
     @if(auth()->user()->id_employee)
     <div class="mt-3 grid grid-cols-1 sm:grid-cols-1">
-      <div class="rounded-xl border p-3 text-center 
-          {{ $isPositive ? 'bg-emerald-50 border-emerald-200' : ($isNegative ? 'bg-rose-50 border-rose-200' : 'bg-slate-50 border-slate-200') }}">
-        <p class="text-xs text-slate-500">Time Balance</p>
-        <p class="font-semibold mb-0
-            {{ $isPositive ? 'text-emerald-700' : ($isNegative ? 'text-rose-700' : 'text-slate-500') }}">
-          @if ($isPositive)
-            +{{ sprintf('%02d:%02d', $hours, $minutes) }} <span class="text-xs font-normal">(Lembur)</span>
-          @elseif ($isNegative)
-            -{{ sprintf('%02d:%02d', $hours, $minutes) }} <span class="text-xs font-normal">(Hutang)</span>
-          @else
-            {{ sprintf('%02d:%02d', $hours, $minutes) }}
-          @endif
-        </p>
-      </div>
+      {{-- Time Balance button --}}
+    <button
+      type="button"
+      class="rounded-xl border p-3 text-center w-full transition hover:shadow {{ $balanceBox }}"
+      data-ledger-trigger
+      data-ledger-endpoint="{{ route('user.balance.show') }}"
+    >
+      <p class="text-xs text-slate-500">Time Balance</p>
+      <p class="font-semibold mb-0 {{ $balanceText }}">
+        @if ($isPositive)
+          +{{ sprintf('%02d:%02d', $hours, $minutes) }} <span class="text-xs font-normal">(Lembur)</span>
+        @elseif ($isNegative)
+          -{{ sprintf('%02d:%02d', $hours, $minutes) }} <span class="text-xs font-normal">(Hutang)</span>
+        @else
+          {{ sprintf('%02d:%02d', $hours, $minutes) }}
+        @endif
+      </p>
+    </button>
     </div>
       <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <button id="checkin-button-desktop"
@@ -191,4 +199,8 @@
 @endif
 
 <div class="h-20 sm:h-0"></div>
+
+@include('_ledger-modal', [
+  'endpoint' => route('user.balance.show')
+])
 @endsection

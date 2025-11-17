@@ -131,21 +131,30 @@ class TimeBalanceController extends Controller
      * @param int $id
      * @return \Illuminate\Http\Response
      */
-    public function showLedger(Request $request, int $id)
+    public function showMe()
     {
-        $employee = Employees::findOrFail($id);
-        $ledgers = TimeLedgers::where('id_employee', $id)
-            ->when($request->from, fn($q) => $q->whereDate('work_date', '>=', $request->from))
-            ->when($request->to, fn($q) => $q->whereDate('work_date', '<=', $request->to))
-            ->when($request->type, fn($q) => $q->where('type', $request->type))
-            ->orderByDesc('created_at')
-            ->paginate(10);
+        $user = auth()->user();
 
-        return view('attendances.timebalances.show_ledger', compact('employee', 'ledgers'))
-            ->with([
-                'from' => $request->from,
-                'to'   => $request->to,
-                'type' => $request->type,
-            ]);
+        abort_unless($user?->id_employee, 403, 'No employee bound to this user.');
+
+        // Adjust fields/relations to your model names
+        $rows = TimeLedgers::where('id_employee', 4)
+            ->orderByDesc('work_date')
+            ->orderByDesc('id')
+            ->limit(100)
+            ->get()
+            ->map(function ($r) {
+                // Normalize to a simple JSON the UI can render
+                return [
+                    'date'    => optional($r->work_date)->format('Y-m-d'),
+                    'time'    => optional($r->created_at)->format('H:i'),
+                    'type'    => $r->type,                  // e.g. 'credit' | 'debit' | 'initial_balance'
+                    'minutes' => (int) $r->minutes,         // positive integer minutes stored
+                    'source'  => (string) $r->source,       // e.g. 'system' | 'manual' | 'attendance'
+                    'note'    => (string) ($r->note ?? ''),
+                ];
+            });
+
+        return response()->json($rows);
     }
 }

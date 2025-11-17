@@ -10,3 +10,4 @@ import './accountPage';
 import './cabang.index';
 import './pasangan.index';
 import './timeLedger'
+import './ledger-modal'
