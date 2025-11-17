@@ -213,7 +213,7 @@ Route::middleware(['auth', 'single.session'])->group(function () {
 
     Route::controller(timeBalanceController::class)->group(function () {
         Route::middleware('role:user')->group(function () {
-            
+            Route::get('/user/timebalances', 'showMe')->name('user.balance.show');
         });
 
         Route::middleware('role:superadmin,admin')->group(function () {

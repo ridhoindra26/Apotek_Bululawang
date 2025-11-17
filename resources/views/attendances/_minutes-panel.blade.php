@@ -13,10 +13,10 @@
 
       <div class="flex-1 overflow-y-auto p-4">
         <div class="grid grid-cols-2 gap-3 text-sm">
-          <div class="rounded-lg bg-slate-50 p-3"><p class="text-slate-500">Late</p><p id="mp-late" class="font-semibold">0</p></div>
-          <div class="rounded-lg bg-slate-50 p-3"><p class="text-slate-500">Early Leave</p><p id="mp-early-leave" class="font-semibold">0</p></div>
-          <div class="rounded-lg bg-slate-50 p-3"><p class="text-slate-500">Early Check-in</p><p id="mp-early-in" class="font-semibold">0</p></div>
-          <div class="rounded-lg bg-slate-50 p-3"><p class="text-slate-500">Overtime</p><p id="mp-ot" class="font-semibold">0</p></div>
+          <div class="rounded-lg bg-slate-50 p-3"><p class="text-rose-700 font-bold">Late</p><p id="mp-late" class="font-semibold">0</p></div>
+          <div class="rounded-lg bg-slate-50 p-3"><p class="text-rose-700 font-bold">Early Leave</p><p id="mp-early-leave" class="font-semibold">0</p></div>
+          <div class="rounded-lg bg-slate-50 p-3"><p class="text-emerald-700 font-bold">Early Check-in</p><p id="mp-early-in" class="font-semibold">0</p></div>
+          <div class="rounded-lg bg-slate-50 p-3"><p class="text-emerald-700 font-bold">Overtime</p><p id="mp-ot" class="font-semibold">0</p></div>
         </div>
 
         <form id="minutes-form" class="mt-5 space-y-4">
@@ -25,13 +25,13 @@
             <label class="block text-sm text-slate-600 mb-1">Penalty Minutes</label>
             <input type="number" min="0" id="mp-penalty"
                    class="w-full rounded-lg border border-slate-200 px-3 py-2 focus:border-[#318f8c] focus:ring-0">
-            <p id="mp-penalty-hint" class="text-xs text-slate-500 mt-1"></p>
+            <p id="mp-penalty-hint" class="text-xs text-rose-700 mt-1"></p>
           </div>
           <div>
             <label class="block text-sm text-slate-600 mb-1">Overtime Applied</label>
             <input type="number" min="0" id="mp-ot-applied"
                    class="w-full rounded-lg border border-slate-200 px-3 py-2 focus:border-[#318f8c] focus:ring-0">
-            <p id="mp-ot-hint" class="text-xs text-slate-500 mt-1"></p>
+            <p id="mp-ot-hint" class="text-xs text-emerald-700 mt-1"></p>
           </div>
           <div>
             <label class="block text-sm text-slate-600 mb-1">Note (optional)</label>
