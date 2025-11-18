@@ -570,4 +570,39 @@ class jadwalController extends Controller
 
         return back()->with('status', "Jadwal bulan {$bulan}/{$tahun} telah dihapus ({$deleted} entri).");
     }
+
+    public function user(Request $request)
+    {
+        // Sesuaikan dengan strukturmu:
+        // kalau punya relasi User -> employee:
+        $employee = auth()->user() ?? null;
+        $employeeId = $employee->id_employee ?? null;
+
+        if (!$employeeId) {
+            abort(403, 'Employee profile not found for this user.');
+        }
+
+        $today = Carbon::today();
+
+        // 1) Jadwal hari ini
+        $todaySchedule = Schedules::with(['branches', 'shiftTime'])
+            ->forEmployee($employeeId)
+            ->onDate($today)
+            ->first();
+
+        // 2) Jadwal beberapa hari ke depan (default 14 hari)
+        $days = (int) $request->get('days', 30);
+
+        $upcomingSchedules = Schedules::with(['branches', 'shiftTime'])
+            ->forEmployee($employeeId)
+            ->whereDate('date', '>=', $today)
+            ->orderBy('date')
+            ->limit($days)
+            ->get();
+
+        return view('jadwal.user', compact(
+            'todaySchedule',
+            'upcomingSchedules'
+        ));
+    }
 }

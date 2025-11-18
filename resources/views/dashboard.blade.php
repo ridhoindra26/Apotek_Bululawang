@@ -48,70 +48,87 @@
     </div>
 
     {{-- STATUS SUMMARY --}}
-    <div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-      <div class="rounded-xl border border-slate-200 p-3 text-center bg-slate-50">
-        <p class="text-xs text-slate-500">Check-In</p>
-        <p class="font-semibold text-slate-800">
-          {{ $attendanceToday?->check_in_at ? $attendanceToday->check_in_at->format('H:i') : '—' }}
-        </p>
+      @if ($todayIsVacation)
+      <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-1">
+        <div class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700 text-center">
+          Hari ini kamu <span class="font-semibold">Libur</span>.
+          <br>Have a nice vacation!
+        </div>
       </div>
-      <div class="rounded-xl border border-slate-200 p-3 text-center bg-slate-50">
-        <p class="text-xs text-slate-500">Check-Out</p>
-        <p class="font-semibold text-slate-800">
-          {{ $attendanceToday?->check_out_at ? $attendanceToday->check_out_at->format('H:i') : '—' }}
-        </p>
-      </div>
-      <div class="rounded-xl border border-slate-200 p-3 text-center bg-slate-50">
-        <p class="text-xs text-slate-500">Status</p>
-        <p class="font-semibold text-[#318f8c] capitalize">
-          {{ $attendanceToday?->status ? str_replace('_',' ', $attendanceToday->status) : 'not checked in' }}
-        </p>
-      </div>
-      <div class="rounded-xl border border-slate-200 p-3 text-center bg-slate-50">
-        <p class="text-xs text-slate-500">Work Duration</p>
-        <p class="font-semibold text-slate-800">
-          {{ $attendanceToday?->work_minutes ? sprintf('%02d:%02d', floor($attendanceToday->work_minutes / 60), $attendanceToday->work_minutes % 60) : '—' }}
-        </p>
-      </div>
-    </div>
+      @else
+        <div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div class="rounded-xl border border-slate-200 p-3 text-center bg-slate-50">
+            <p class="text-xs text-slate-500">Check-In</p>
+            <p class="font-semibold text-slate-800">
+              {{ $attendanceToday?->check_in_at ? $attendanceToday->check_in_at->format('H:i') : '—' }}
+            </p>
+          </div>
+          <div class="rounded-xl border border-slate-200 p-3 text-center bg-slate-50">
+            <p class="text-xs text-slate-500">Check-Out</p>
+            <p class="font-semibold text-slate-800">
+              {{ $attendanceToday?->check_out_at ? $attendanceToday->check_out_at->format('H:i') : '—' }}
+            </p>
+          </div>
+          <div class="rounded-xl border border-slate-200 p-3 text-center bg-slate-50">
+            <p class="text-xs text-slate-500">Status</p>
+            <p class="font-semibold text-[#318f8c] capitalize">
+              {{ $attendanceToday?->status ? str_replace('_',' ', $attendanceToday->status) : 'not checked in' }}
+            </p>
+          </div>
+          <div class="rounded-xl border border-slate-200 p-3 text-center bg-slate-50">
+            <p class="text-xs text-slate-500">Work Duration</p>
+            <p class="font-semibold text-slate-800">
+              {{ $attendanceToday?->work_minutes ? sprintf('%02d:%02d', floor($attendanceToday->work_minutes / 60), $attendanceToday->work_minutes % 60) : '—' }}
+            </p>
+          </div>
+        </div>
+      @endif
 
     {{-- Hidden camera input --}}
     <input type="file" id="camera-input" accept="image/*" capture="user" class="hidden">
 
-    {{-- ACTION BUTTONS --}}
-    {{-- @dd(auth()->user()) --}}
     @if(auth()->user()->id_employee)
     <div class="mt-3 grid grid-cols-1 sm:grid-cols-1">
       {{-- Time Balance button --}}
-    <button
-      type="button"
-      class="rounded-xl border p-3 text-center w-full transition hover:shadow {{ $balanceBox }}"
-      data-ledger-trigger
-      data-ledger-endpoint="{{ route('user.balance.show') }}"
-    >
-      <p class="text-xs text-slate-500">Time Balance</p>
-      <p class="font-semibold mb-0 {{ $balanceText }}">
-        @if ($isPositive)
+      <button
+        type="button"
+        class="rounded-xl border p-3 text-center w-full transition hover:shadow {{ $balanceBox }}"
+        data-ledger-trigger
+        data-ledger-endpoint="{{ route('user.balance.show') }}"
+        >
+        <p class="text-xs text-slate-500">Time Balance</p>
+        <p class="font-semibold mb-0 {{ $balanceText }}">
+          @if ($isPositive)
           +{{ sprintf('%02d:%02d', $hours, $minutes) }} <span class="text-xs font-normal">(Lembur)</span>
-        @elseif ($isNegative)
+          @elseif ($isNegative)
           -{{ sprintf('%02d:%02d', $hours, $minutes) }} <span class="text-xs font-normal">(Hutang)</span>
-        @else
+          @else
           {{ sprintf('%02d:%02d', $hours, $minutes) }}
-        @endif
-      </p>
-    </button>
+          @endif
+        </p>
+      </button>
     </div>
-      <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <button id="checkin-button-desktop"
-                class="hidden sm:inline-flex w-full items-center justify-center !rounded-md bg-[#318f8c] px-6 py-3 text-white font-semibold hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#318f8c]/40 active:opacity-100 transition-all">
-          Check-In
-        </button>
 
-        <button id="checkout-button-desktop"
-                class="hidden sm:inline-flex w-full items-center justify-center !rounded-md bg-[#318f8c] px-6 py-3 text-white font-semibold hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#318f8c]/40 active:opacity-100 transition-all">
-          Check-Out
-        </button>
-      </div>
+    {{-- ACTION BUTTONS --}}
+    <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <button id="checkin-button-desktop"
+              type="button"
+              @disabled($todayIsVacation)
+              class="hidden sm:inline-flex w-full items-center justify-center !rounded-md px-6 py-3 text-white font-semibold focus:outline-none focus:ring-2 focus:ring-[#318f8c]/40 active:opacity-100 transition-all
+                    bg-[#318f8c] hover:opacity-90
+                    {{ $todayIsVacation ? 'opacity-60 cursor-not-allowed hover:opacity-60' : '' }}">
+        Check-In
+      </button>
+
+      <button id="checkout-button-desktop"
+              type="button"
+              @disabled($todayIsVacation)
+              class="hidden sm:inline-flex w-full items-center justify-center !rounded-md px-6 py-3 text-white font-semibold focus:outline-none focus:ring-2 focus:ring-[#318f8c]/40 active:opacity-100 transition-all
+                    bg-[#318f8c] hover:opacity-90
+                    {{ $todayIsVacation ? 'opacity-60 cursor-not-allowed hover:opacity-60' : '' }}">
+        Check-Out
+      </button>
+    </div>
     @else
       <p class="mt-6 text-center text-sm text-slate-500">
         Anda belum terdaftar sebagai karyawan.<br>
@@ -187,11 +204,19 @@
 <div class="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur px-4 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3 sm:hidden">
   <div class="mx-auto flex w-full max-w-md gap-3">
     <button id="checkin-button"
-            class="flex-1 !rounded-md bg-[#318f8c] py-3 text-white font-semibold hover:opacity-90 focus:ring-2 focus:ring-[#318f8c]/40">
-       Check-In
+            type="button"
+            @disabled($todayIsVacation)
+            class="flex-1 !rounded-md py-3 text-white font-semibold focus:ring-2 focus:ring-[#318f8c]/40
+                   bg-[#318f8c] hover:opacity-90
+                   {{ $todayIsVacation ? 'opacity-60 cursor-not-allowed hover:opacity-60' : '' }}">
+      Check-In
     </button>
     <button id="checkout-button"
-            class="flex-1 !rounded-md bg-[#318f8c] py-3 text-white font-semibold hover:opacity-90 focus:ring-2 focus:ring-[#318f8c]/40">
+            type="button"
+            @disabled($todayIsVacation)
+            class="flex-1 !rounded-md py-3 text-white font-semibold focus:ring-2 focus:ring-[#318f8c]/40
+                   bg-[#318f8c] hover:opacity-90
+                   {{ $todayIsVacation ? 'opacity-60 cursor-not-allowed hover:opacity-60' : '' }}">
       Check-Out
     </button>
   </div>

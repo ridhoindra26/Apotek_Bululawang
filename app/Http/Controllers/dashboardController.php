@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\Models\Attendances;
 use App\Models\TimeBalances;
+use App\Models\Schedules;
 
 
 class dashboardController extends Controller
@@ -15,31 +16,47 @@ class dashboardController extends Controller
      */
     public function index()
     {
-        $user = Auth::user();
+        $user  = Auth::user();
+        $today = today()->toDateString(); // sama dengan now()->toDateString()
 
-        // Default empty data
-        $attendanceToday = null;
+        // Default values
+        $todayIsVacation   = false;
+        $attendanceToday   = null;
         $recentAttendances = collect();
-        $balance_minutes = 0;
-        $debt_minutes = 0;
-        $credit_minutes = 0;
+        $balance_minutes   = 0;
 
-        // Only load attendance if linked to employee
         if ($user && $user->id_employee) {
-            $attendanceToday = Attendances::where('id_employee', $user->id_employee)
-                ->whereDate('work_date', today())
+
+            $employeeId = $user->id_employee;
+
+            // Cek libur hari ini
+            $todayIsVacation = Schedules::where('id_employee', $employeeId)
+                ->whereDate('date', $today)
+                ->where('is_vacation', 1)
+                ->exists();
+
+            // Absensi hari ini
+            $attendanceToday = Attendances::where('id_employee', $employeeId)
+                ->whereDate('work_date', $today)
                 ->first();
 
-            $recentAttendances = Attendances::where('id_employee', $user->id_employee)
+            // 7 absensi terakhir
+            $recentAttendances = Attendances::where('id_employee', $employeeId)
                 ->orderByDesc('work_date')
                 ->take(7)
                 ->get();
-            
-            $timeBalance = TimeBalances::where('id_employee', $user->id_employee)->first();
-            $balance_minutes = $timeBalance ? $timeBalance->getNetMinutesAttribute() : 0;
+
+            // Time balance (pakai accessor kalau ada)
+            $timeBalance = TimeBalances::where('id_employee', $employeeId)->first();
+            $balance_minutes = $timeBalance?->net_minutes ?? 0;  // daripada getNetMinutesAttribute()
         }
 
-        return view('dashboard', compact('attendanceToday', 'recentAttendances', 'balance_minutes'));
+        return view('dashboard', compact(
+            'attendanceToday',
+            'recentAttendances',
+            'balance_minutes',
+            'todayIsVacation'
+        ));
     }
 
     /**

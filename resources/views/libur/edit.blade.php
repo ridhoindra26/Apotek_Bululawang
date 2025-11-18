@@ -16,7 +16,7 @@
         <!-- Karyawan -->
         <div class="mb-4">
             <label for="karyawan" class="block text-sm font-medium text-gray-700">Karyawan</label>
-            <input type="text" id="karyawan" name="karyawan" value="{{ $holiday->employees->first()->name }}" readonly
+            <input type="text" id="karyawan" name="karyawan" value="{{ $holiday->employees->name }}" readonly
                 class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
         </div>
 

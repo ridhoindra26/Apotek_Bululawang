@@ -141,7 +141,7 @@ class TimeBalanceController extends Controller
         $rows = TimeLedgers::where('id_employee', $user->id_employee)
             ->orderByDesc('work_date')
             ->orderByDesc('id')
-            ->limit(100)
+            ->limit(50)
             ->get()
             ->map(function ($r) {
                 // Normalize to a simple JSON the UI can render

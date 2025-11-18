@@ -172,6 +172,7 @@ async function openLedger(endpoint) {
       width: isMobile() ? '100%' : '900px',
       showCloseButton: true,
       confirmButtonText: 'Tutup',
+      confirmButtonColor: '#318f8c',
       focusConfirm: false,
       padding: isMobile() ? '12px' : undefined,
       customClass: { popup: isMobile() ? 'swal2-mobile-fullscreen' : '' },
@@ -208,9 +209,9 @@ function injectOnceMobileCss() {
       text-align: left !important;
     }
     .swal2-html-container { margin: 10px 16px 8px 16px !important; }
-    .swal2-actions { padding: 8px 16px 14px 16px; }
-    .swal2-actions .swal2-confirm { width: 100%; border-radius: 10px; padding: 10px 12px; font-weight: 700; }
-    .swal2-close { top: 10px !important; right: 10px !important; }
+    .swal2-actions { padding: 8px 0px 14px 0px; }
+    .swal2-actions .swal2-confirm { width: 100%; border-radius: 10px; padding: 8px 12px; font-weight: 700; }
+    .swal2-close { top: 0px !important; right: 10px !important; }
   `
   document.head.appendChild(style)
 }
