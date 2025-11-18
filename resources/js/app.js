@@ -1,3 +1,11 @@
+window.testSwal = () => {
+  Swal.fire({
+    title: 'Test Swal',
+    text: 'Kalau ini tampilnya jelek, berarti CSS masih belum masuk.',
+    icon: 'info',
+  });
+};
+
 import './bootstrap';
 import './edit-day';
 import './destroy-day';
@@ -11,3 +19,5 @@ import './cabang.index';
 import './pasangan.index';
 import './timeLedger'
 import './ledger-modal'
+
+import 'sweetalert2/dist/sweetalert2.min.css';

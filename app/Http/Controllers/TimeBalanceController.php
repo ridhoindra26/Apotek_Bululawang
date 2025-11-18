@@ -138,7 +138,7 @@ class TimeBalanceController extends Controller
         abort_unless($user?->id_employee, 403, 'No employee bound to this user.');
 
         // Adjust fields/relations to your model names
-        $rows = TimeLedgers::where('id_employee', 4)
+        $rows = TimeLedgers::where('id_employee', $user->id_employee)
             ->orderByDesc('work_date')
             ->orderByDesc('id')
             ->limit(100)

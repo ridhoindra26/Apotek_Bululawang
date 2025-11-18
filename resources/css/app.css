@@ -1,5 +1,9 @@
 @import 'tailwindcss';
 
+.swal2-container .swal2-popup .swal2-title {
+    text-align: center !important;
+    font-size: 1.5rem !important;
+}
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
