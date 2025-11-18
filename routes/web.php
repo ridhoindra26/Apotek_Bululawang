@@ -104,6 +104,16 @@ Route::middleware(['auth', 'single.session'])->group(function () {
         });
 
     /**
+     * Jadwal — user
+     */
+    Route::controller(jadwalController::class)
+        ->middleware('role:user')
+        ->group(function () {
+            Route::get('/jadwal/user', 'user')->name('jadwal.user');
+            // Route::get('/jadwal/day', 'dayShow')->name('jadwal.day.show');
+        });
+
+    /**
      * Jadwal — superadmin & admin
      */
     Route::controller(jadwalController::class)

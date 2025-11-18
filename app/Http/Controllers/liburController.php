@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Vacations;
 use App\Models\Employees;
+use App\Models\Schedules;
 
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class liburController extends Controller
 {
@@ -63,20 +65,27 @@ class liburController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'tanggal' => 'required|date',
-            'karyawan' => 'required|exists:employees,id',
+        $validated = $request->validate([
+            'tanggal'    => 'required|date',
+            'karyawan'   => 'required|exists:employees,id',
             'keterangan' => 'required|string',
         ]);
     
-        $holiday = Vacations::create([
-            // 'tanggal' => Carbon::parse($request->tanggal)->day,
-            // 'bulan' => Carbon::parse($request->tanggal)->month,
-            // 'tahun' => Carbon::parse($request->tanggal)->year,
-            'date_of_vacation' => $request->tanggal,
-            'id_employee' => $request->karyawan,
-            'description' => $request->keterangan
-        ]);
+        DB::transaction(function () use ($validated) {
+            // Simpan data libur
+            Vacations::create([
+                'date_of_vacation' => $validated['tanggal'],
+                'id_employee'      => $validated['karyawan'],
+                'description'      => $validated['keterangan'],
+            ]);
+
+            // Update jadwal kalau ada
+            Schedules::whereDate('date', $validated['tanggal'])
+                ->where('id_employee', $validated['karyawan'])
+                ->update([
+                    'is_vacation' => 1,
+                ]);
+        });
     
         return redirect()->route('libur.index')->with('success', 'Libur berhasil ditambahkan.');
     }
@@ -106,17 +115,41 @@ class liburController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $request->validate([
-            'tanggal' => 'required|date',
-            'keterangan' => 'required|string',
+        $validated = $request->validate([
+            'tanggal'     => 'required|date',
+            'keterangan'  => 'required|string',
         ]);
-    
+
         $holiday = Vacations::findOrFail($id);
-    
-        $holiday->update([
-            'date_of_vacation' => $request->tanggal,
-            'description' => $request->keterangan
-        ]);
+
+        DB::transaction(function () use ($holiday, $validated) {
+            $oldDate    = $holiday->date_of_vacation;
+            $newDate    = $validated['tanggal'];
+            $employeeId = $holiday->id_employee;
+
+            // Kalau tanggal libur berubah, sinkronkan ke schedules
+            if ($oldDate != $newDate) {
+                // Reset is_vacation di jadwal tanggal lama (kalau ada)
+                Schedules::whereDate('date', $oldDate)
+                    ->where('id_employee', $employeeId)
+                    ->update([
+                        'is_vacation' => 0,
+                    ]);
+
+                // Set is_vacation di jadwal tanggal baru (kalau ada)
+                Schedules::whereDate('date', $newDate)
+                    ->where('id_employee', $employeeId)
+                    ->update([
+                        'is_vacation' => 1,
+                    ]);
+            }
+
+            // Update data liburnya
+            $holiday->update([
+                'date_of_vacation' => $newDate,
+                'description'      => $validated['keterangan'],
+            ]);
+        });
     
         return redirect()->route('libur.index')->with('success', 'Libur berhasil diperbarui.');
     }
@@ -126,8 +159,23 @@ class liburController extends Controller
      */
     public function destroy(string $id)
     {
-        $holiday = Vacations::findOrFail($id);
-        $holiday->delete();
+        DB::transaction(function () use ($id) {
+            $holiday = Vacations::findOrFail($id);
+
+            // Simpan dulu nilai yang dibutuhkan sebelum delete
+            $tanggal   = $holiday->date_of_vacation;
+            $karyawan  = $holiday->id_employee;
+
+            // Reset flag is_vacation di jadwal (kalau ada)
+            Schedules::whereDate('date', $tanggal)
+                ->where('id_employee', $karyawan)
+                ->update([
+                    'is_vacation' => 0,
+                ]);
+
+            // Hapus liburnya
+            $holiday->delete();
+        });
 
         return redirect()->route('libur.index')->with('success', 'Data libur berhasil dihapus.');
     }

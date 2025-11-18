@@ -11,7 +11,7 @@ class Schedules extends Model
 
     protected $table = 'schedules';
 
-    protected $fillable = ['branch_id', 'id_shift_time','employee_id','date','shift','is_leave'];
+    protected $fillable = ['id_branch', 'id_shift_time','id_employee','date','shift','is_vacation'];
 
     public function branches()  {
         return $this->belongsTo(Branches::class, 'id_branch');
