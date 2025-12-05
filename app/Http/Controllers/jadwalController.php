@@ -141,7 +141,9 @@ class jadwalController extends Controller
         $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $bulan, $tahun);
 
         $cabangs   = Branches::with('employees.roles')->get();
-        $pasangans = Roles::with('employees')->get();
+        $pasangans = Roles::with('employees')
+            ->whereNotIn('id', [13])
+            ->get();
 
         $liburs = Vacations::whereDate('date_of_vacation', '>=', Carbon::create($tahun, $bulan, 1))
             ->whereDate('date_of_vacation', '<=', Carbon::create($tahun, $bulan, $daysInMonth))
@@ -449,7 +451,10 @@ class jadwalController extends Controller
             })->values();
 
         // Employee choices grouped per branch (for selects)
-        $branches = Branches::with(['employees:id,id_branch,name'])
+        $branches = Branches::with(['employees' => function ($q) {
+            $q->where('id_role', '!=', 13)   // filter role
+              ->select('id', 'id_branch', 'name'); // jangan lupa fk-nya
+        }])
             ->get(['id','name'])
             ->map(function($b){
                 return [

@@ -12,6 +12,7 @@ use App\Http\Controllers\dashboardController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\TimeBalanceController;
+use App\Http\Controllers\AnnouncementController;
 
 Route::get('/', function () {
     return redirect()->route('auth.index');
@@ -180,6 +181,16 @@ Route::middleware(['auth', 'single.session'])->group(function () {
             Route::post('/accounts', 'store')->name('accounts.store');
             Route::patch('/accounts/{user}', 'update')->name('accounts.update');
             Route::delete('/accounts/{user}', 'destroy')->name('accounts.destroy');
+        });
+
+        Route::controller(AnnouncementController::class)->group(function () {
+            Route::get('/announcement', 'index')->name('announcements.index');
+            Route::get('/announcement/create', 'create')->name('announcements.create');
+            Route::post('/announcement', 'store')->name('announcements.store');
+            Route::get('/announcement/{id}', 'show')->name('announcements.show');
+            Route::get('/announcement/{id}/edit', 'edit')->name('announcements.edit');
+            Route::post('/announcement/{id}', 'update')->name('announcements.update');
+            Route::delete('/announcement/{id}', 'destroy')->name('announcements.destroy');
         });
 
     });

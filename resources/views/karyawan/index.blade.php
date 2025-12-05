@@ -57,13 +57,19 @@
         <div class="row my-4">
             <div class="col-12 d-flex justify-content-start gap-3">
                 <a href="{{ route('cabang.index') }}" class="btn bg-blue-500 text-black font-semibold py-2 px-4 rounded-lg hover:bg-blue-600">
-                    Kelola Cabang
+                    Manage Branches
                 </a>
                 <a href="{{ route('pasangan.index') }}" class="btn bg-yellow-500 text-black font-semibold py-2 px-4 rounded-lg hover:bg-yellow-600">
-                    Kelola Pasangan
+                    Employee Roles
                 </a>
                 <a href="{{ route('karyawan.create') }}" class="btn bg-green-500 text-black font-semibold py-2 px-4 rounded-lg hover:bg-green-600">
-                    Tambah Karyawan
+                    ADD Employee
+                </a>
+                <a href="{{ route('announcements.index') }}" class="btn bg-green-500 text-black font-semibold py-2 px-4 rounded-lg hover:bg-green-600">
+                    Employee Announcements
+                </a>
+                <a href="{{ route('karyawan.create') }}" class="btn bg-green-500 text-black font-semibold py-2 px-4 rounded-lg hover:bg-green-600">
+                    Greetings
                 </a>
             </div>
         </div>
