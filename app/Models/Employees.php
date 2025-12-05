@@ -46,4 +46,10 @@ class Employees extends Model
         return $this->belongsTo(ShiftTimes::class, 'default_siang_shift_time_id'); 
     }
 
+    public function announcements()
+    {
+        return $this->belongsToMany(Announcement::class, 'announcement_employee', 'id_employee', 'announcement_id')
+            ->withTimestamps();
+    }
+
 }

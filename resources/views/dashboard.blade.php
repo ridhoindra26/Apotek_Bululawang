@@ -23,6 +23,104 @@
 @endphp
 
 <div class="mx-auto w-full max-w-4xl px-4 sm:px-6">
+
+    @if($announcements->count())
+    <div
+        x-data="{
+            openAnnouncementModal: true,
+            announcements: {{ $announcements->map(fn ($a) => [
+                'title' => $a->title,
+                'body' => $a->body,
+                'from' => optional($a->date_from)->format('d M Y'),
+                'to'   => optional($a->date_to)->format('d M Y'),
+            ])->values()->toJson() }},
+            currentIndex: 0,
+            get current() { return this.announcements[this.currentIndex] ?? null },
+            next() {
+                if (this.currentIndex < this.announcements.length - 1) this.currentIndex++;
+            },
+            prev() {
+                if (this.currentIndex > 0) this.currentIndex--;
+            }
+        }"
+        x-show="openAnnouncementModal"
+        x-cloak
+        class="fixed inset-0 z-40 flex items-center justify-center"
+        aria-modal="true"
+        role="dialog"
+    >
+        {{-- overlay --}}
+        <div 
+            class="fixed inset-0 bg-slate-900/60"
+            @click="openAnnouncementModal = false"
+        ></div>
+
+        {{-- modal --}}
+        <div class="relative z-50 w-full max-w-lg mx-4 rounded-2xl bg-white shadow-xl border border-slate-200">
+            <template x-if="current">
+                <div>
+                    <div class="flex items-start justify-between px-5 pt-4 pb-3 border-b border-slate-100">
+                        <div>
+                            <p class="text-[11px] uppercase tracking-wide text-[#318f8c] font-bold">
+                                Pengumumaaan <span x-text="announcements.length > 1 ? '(' + (currentIndex+1) + '/' + announcements.length + ')' : ''"></span>
+                            </p>
+                            {{-- <h3 class="text-sm font-semibold text-slate-800" x-text="current.title"></h3> --}}
+                            <p class="mt-0.5 text-[11px] text-slate-500">
+                                <span x-text="current.from"></span>
+                                <template x-if="current.to">
+                                    <span x-text="' – ' + current.to"></span>
+                                </template>
+                            </p>
+                        </div>
+
+                        <button 
+                            type="button"
+                            class="inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                            @click="openAnnouncementModal = false"
+                        >
+                            ✕
+                        </button>
+                    </div>
+
+                    <div class="px-4 py-4 max-h-[50vh] overflow-y-auto">
+                        <div class="text-sm text-slate-700 whitespace-pre-line" x-text="current.body"></div>
+                    </div>
+
+                    <div class="flex items-center justify-between px-5 py-3 border-t border-slate-100 bg-slate-50/80 rounded-b-2xl">
+                        <button 
+                            type="button"
+                            class="px-3 py-1.5 text-xs rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-40"
+                            @click="prev()"
+                            :disabled="currentIndex === 0"
+                            x-show="announcements.length > 1"
+                        >
+                            Sebelumnya
+                        </button>
+                        <div class="flex items-center gap-2">
+                            {{-- <button 
+                                type="button"
+                                class="px-3 py-1.5 text-xs rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100"
+                                @click="openAnnouncementModal = false"
+                            >
+                                Tutup
+                            </button> --}}
+                            <button 
+                                type="button"
+                                class="px-3 py-1.5 text-xs rounded-lg bg-[#318f8c] text-white hover:bg-emerald-700 disabled:opacity-40"
+                                @click="next()"
+                                :disabled="currentIndex === announcements.length - 1"
+                                x-show="announcements.length > 1"
+                            >
+                                Berikutnya
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+@endif
+
   {{-- HEADER CARD --}}
   <div class="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

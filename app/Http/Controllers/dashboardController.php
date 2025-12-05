@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Attendances;
 use App\Models\TimeBalances;
 use App\Models\Schedules;
+use App\Models\Announcement;
 
 
 class dashboardController extends Controller
@@ -24,6 +25,7 @@ class dashboardController extends Controller
         $attendanceToday   = null;
         $recentAttendances = collect();
         $balance_minutes   = 0;
+        $announcements     = collect();
 
         if ($user && $user->id_employee) {
 
@@ -49,13 +51,22 @@ class dashboardController extends Controller
             // Time balance (pakai accessor kalau ada)
             $timeBalance = TimeBalances::where('id_employee', $employeeId)->first();
             $balance_minutes = $timeBalance?->net_minutes ?? 0;  // daripada getNetMinutesAttribute()
+
+            $announcements = Announcement::active()   // scopeActive dari model
+            ->whereHas('employees', function ($q) use ($employeeId) {
+                // kolom di tabel employees biasanya `id`
+                $q->where('employees.id', $employeeId);
+            })
+            ->orderByDesc('date_from')
+            ->get();
         }
 
         return view('dashboard', compact(
             'attendanceToday',
             'recentAttendances',
             'balance_minutes',
-            'todayIsVacation'
+            'todayIsVacation',
+            'announcements'
         ));
     }
 
