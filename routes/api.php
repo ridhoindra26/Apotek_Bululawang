@@ -22,6 +22,7 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 Route::controller(AttendanceController::class)->group(function () {
+    Route::get('/attendance/greeting', 'greeting')->name('attendance.greeting');
     Route::post('/attendance/checkin', 'checkIn')->middleware(['auth', 'single.session'])->name('attendance.checkin');
     Route::post('/attendance/checkout', 'checkOut')->middleware(['auth', 'single.session'])->name('attendance.checkout');
     Route::post('/attendance/dummy', 'dummy')->name('attendance.dummy');

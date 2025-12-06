@@ -12,11 +12,22 @@ use App\Models\ShiftTimes;
 use App\Models\TimeBalances;
 use App\Models\TimeLedgers;
 use App\Models\Branches;
+use App\Models\Greetings;
 
 use Illuminate\Support\Facades\DB;
 
 class AttendanceController extends Controller
 {
+
+    public function greeting()
+    {
+        $greeting = Greetings::whereHas('type', function ($query) {
+            $query->where('name', 'Attendance');
+        })->inRandomOrder()->limit(1)->get(['name'])->first();
+
+        return response()->json(['greeting' => $greeting->name ?? 'Have a good day']);
+    }
+
     /**
      * Ensure balance row exists for an employee.
      */

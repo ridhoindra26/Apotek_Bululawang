@@ -62,7 +62,7 @@
                     <div class="flex items-start justify-between px-5 pt-4 pb-3 border-b border-slate-100">
                         <div>
                             <p class="text-[11px] uppercase tracking-wide text-[#318f8c] font-bold">
-                                Pengumumaaan <span x-text="announcements.length > 1 ? '(' + (currentIndex+1) + '/' + announcements.length + ')' : ''"></span>
+                                announcement <span x-text="announcements.length > 1 ? '(' + (currentIndex+1) + ' of ' + announcements.length + ')' : ''"></span>
                             </p>
                             {{-- <h3 class="text-sm font-semibold text-slate-800" x-text="current.title"></h3> --}}
                             <p class="mt-0.5 text-[11px] text-slate-500">

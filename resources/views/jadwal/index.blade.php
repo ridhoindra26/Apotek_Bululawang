@@ -62,7 +62,7 @@
 
         {{-- Bar filter --}}
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3">
-            <form action="{{ url('/jadwal/generate') }}" method="GET" class="flex flex-wrap items-center gap-2">
+            <form action="{{ route('jadwal.index') }}" method="GET" class="flex flex-wrap items-center gap-2">
                 {{-- Bulan --}}
                 <select name="bulan" class="px-3 py-2 border rounded-md text-xs sm:text-sm">
                     @php
@@ -89,10 +89,16 @@
                     @endfor
                 </select>
 
+                <button type="submit"
+                    class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs sm:text-sm w-full sm:w-auto text-center">
+                    Filter
+                </button>
+
                 @if (!$hasSaved)
                     {{-- Jika belum disimpan → tampilkan tombol Generate --}}
                     <button type="submit"
-                            class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs sm:text-sm w-full sm:w-auto">
+                        formaction="{{ url('/jadwal/generate') }}"
+                        class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs sm:text-sm w-full sm:w-auto">
                         Menyusun Jadwal
                     </button>
                 @else

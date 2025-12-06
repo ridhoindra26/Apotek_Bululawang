@@ -40,11 +40,13 @@ document.addEventListener("DOMContentLoaded", () => {
         const file = e.target.files[0];
         if (!file) return;
 
+        const greeting = await getGreeting();
+
         // Preview before upload
         const preview = URL.createObjectURL(file);
         const confirm = await Swal.fire({
           title: `Confirm ${type}?`,
-          html: `<p class="text-[#318f8c] mb-1">Wih cakepnya oiiii</p><img src="${preview}" class="rounded-xl max-h-60 object-cover mx-auto mb-3"/>`,
+          html: `<p class="text-[#318f8c] mb-1">${greeting}</p><img src="${preview}" class="rounded-xl max-h-60 object-cover mx-auto mb-3"/>`,
           showCancelButton: true,
           confirmButtonColor: "#318f8c",
           confirmButtonText: `Yes, ${type}`,
@@ -135,4 +137,23 @@ document.addEventListener("DOMContentLoaded", () => {
     const btn = document.getElementById(id);
     if (btn) btn.addEventListener("click", () => captureAndSubmit(type));
   });
+
+  async function getGreeting() {
+  try {
+    const res = await fetch("/api/attendance/greeting", {
+      headers: {
+        Accept: "application/json",
+      },
+    });
+
+    if (!res.ok) throw new Error("Failed to fetch greeting");
+
+    const data = await res.json();
+    return data?.greeting || "Have a good day";
+  } catch (err) {
+    console.error("Error fetching greeting:", err);
+    return "Have a good day"; // fallback
+  }
+}
+
 });

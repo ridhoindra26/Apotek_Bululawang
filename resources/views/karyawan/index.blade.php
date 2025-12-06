@@ -68,7 +68,7 @@
                 <a href="{{ route('announcements.index') }}" class="btn bg-green-500 text-black font-semibold py-2 px-4 rounded-lg hover:bg-green-600">
                     Employee Announcements
                 </a>
-                <a href="{{ route('karyawan.create') }}" class="btn bg-green-500 text-black font-semibold py-2 px-4 rounded-lg hover:bg-green-600">
+                <a href="{{ route('greetings.index') }}" class="btn bg-green-500 text-black font-semibold py-2 px-4 rounded-lg hover:bg-green-600">
                     Greetings
                 </a>
             </div>
