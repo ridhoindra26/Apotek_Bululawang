@@ -23,7 +23,7 @@ class jadwalController extends Controller
 
     public function index(Request $request)
     {
-        $bulan = (int) $request->input('bulan', now()->addMonth()->month);
+        $bulan = (int) $request->input('bulan', now()->month);
         $tahun = (int) $request->input('tahun', now()->year);
         $totalDaysInMonth = cal_days_in_month(CAL_GREGORIAN, $bulan, $tahun);
 
