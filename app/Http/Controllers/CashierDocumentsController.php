@@ -123,8 +123,8 @@ class CashierDocumentsController extends Controller
 
         
         $baseData = [
-            // 'cashier_id'  => $user->id_employee,
-            'cashier_id'  => 3,
+            'cashier_id'  => $user->id_employee,
+            // 'cashier_id'  => 3,
             'date'        => $request->date,
             'shift'       => $request->shift,
             'description' => $request->description,
