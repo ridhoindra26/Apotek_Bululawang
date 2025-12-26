@@ -72,6 +72,7 @@
       @endif
 
       <!-- Cashier -->
+      @if(in_array(auth()->user()->id_employee, [5,6,7,8,11,21,25,31,32,33]))
       <a href="{{ route('cashier.index') }}"
         class="flex items-center gap-3 px-4 py-2.5 {{ navClass(request()->routeIs('cashier.*')) }}">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
@@ -80,9 +81,9 @@
             <path d="M10.5 14.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"/>
           </svg>
 
-
         <span>Cashier</span>
       </a>
+      @endif
 
       {{-- Superadmin only: Master Data --}}
       @if(auth()->user()->role === 'superadmin')
