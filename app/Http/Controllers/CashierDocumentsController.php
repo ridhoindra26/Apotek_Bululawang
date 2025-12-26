@@ -14,6 +14,9 @@ class CashierDocumentsController extends Controller
 {
     public function index()
     {
+        if (! in_array(auth()->user()->id_employee, [5,6,7,8,11,21,25,31,32,33])) {
+            abort(403);
+        }
         $today = now();
         $hour = $today->hour;
         $defaultShift = ($hour >= 18 && $hour <= 23) ? 'Siang' : 'Pagi';
@@ -50,6 +53,9 @@ class CashierDocumentsController extends Controller
 
     public function list(Request $request)
     {
+        if (! in_array(auth()->user()->id_employee, [5,6,7,8,11,21,25,31,32,33])) {
+            abort(403);
+        }
         $query = CashierDocuments::query()
             ->with(['cashier.branches' , 'branch', 'photos'])
             ->withCount('photos')
@@ -103,6 +109,9 @@ class CashierDocumentsController extends Controller
 
     public function store(Request $request)
     {
+        if (! in_array(auth()->user()->id_employee, [5,6,7,8,11,21,25,31,32,33])) {
+            abort(403);
+        }
         $user = auth()->user();        
 
         $request->validate([
@@ -285,7 +294,7 @@ class CashierDocumentsController extends Controller
     public function update(Request $request, CashierDocuments $cashierDocuments)
     {
         $user = auth()->user();
-        if (! $user) {
+        if (!$user) {
             abort(403);
         }
 
