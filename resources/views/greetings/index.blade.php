@@ -104,57 +104,51 @@
                                     {{ $type->name }}
                                 </td>
                                 <td class="px-3 py-2 text-right">
-                                    {{-- Edit Type modal per-row --}}
-                                    <div x-data="{ open: false }" class="inline-block">
-                                        <button
-                                            type="button"
-                                            class="px-2 py-1 text-[11px] rounded border border-slate-200 hover:bg-slate-50"
-                                            @click="open = true"
-                                        >
-                                            Edit
-                                        </button>
+                                    <div class="flex items-center justify-end gap-2">
+                                        {{-- Edit Type modal per-row --}}
+                                        <div x-data="{ open: false }" class="inline-block">
+                                            <button
+                                                type="button"
+                                                class="px-2 py-1 text-[11px] rounded border border-slate-200 hover:bg-slate-50"
+                                                @click="open = true"
+                                            >
+                                                Edit
+                                            </button>
 
-                                        <div
-                                            x-show="open"
-                                            x-cloak
-                                            class="fixed inset-0 z-40 flex items-center justify-center"
-                                        >
-                                            <div class="fixed inset-0 bg-slate-900/60" @click="open = false"></div>
+                                            <div
+                                                x-show="open"
+                                                x-cloak
+                                                class="fixed inset-0 z-40 flex items-center justify-center"
+                                            >
+                                                <div class="fixed inset-0 bg-slate-900/60" @click="open = false"></div>
 
-                                            <div class="relative z-50 w-full max-w-sm mx-4 rounded-2xl bg-white shadow-xl border border-slate-200">
-                                                <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-                                                    <h3 class="text-sm font-semibold text-slate-800">Edit Greeting Type</h3>
-                                                    <button type="button"
-                                                            class="h-7 w-7 flex items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600"
-                                                            @click="open = false">
-                                                        ✕
-                                                    </button>
-                                                </div>
-
-                                                <form action="{{ route('greeting-types.update', $type) }}"
-                                                      method="POST"
-                                                      class="px-4 py-4 space-y-4">
-                                                    @csrf
-                                                    @method('POST')
-
-                                                    <div>
-                                                        <label class="block text-xs font-medium text-slate-600 mb-1">
-                                                            Nama Type
-                                                        </label>
-                                                        <input type="text" name="name"
-                                                               value="{{ $type->name }}"
-                                                               class="w-full rounded-lg border-slate-200 text-sm"
-                                                               required>
+                                                <div class="relative z-50 w-full max-w-sm mx-4 rounded-2xl bg-white shadow-xl border border-slate-200">
+                                                    <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+                                                        <h3 class="text-sm font-semibold text-slate-800">Edit Greeting Type</h3>
+                                                        <button type="button"
+                                                                class="h-7 w-7 flex items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                                                                @click="open = false">
+                                                            ✕
+                                                        </button>
                                                     </div>
 
-                                                    <div class="flex justify-between items-center pt-2 border-t border-slate-100">
-                                                        <button type="button"
-                                                                class="px-3 py-1.5 text-[11px] rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50"
-                                                                onclick="if (confirm('Hapus type ini?')) { this.closest('form').nextElementSibling.submit(); }">
-                                                            Hapus
-                                                        </button>
+                                                    <form action="{{ route('greeting-types.update', $type) }}"
+                                                        method="POST"
+                                                        class="px-4 py-4 space-y-4">
+                                                        @csrf
+                                                        @method('POST')
 
-                                                        <div class="flex gap-2">
+                                                        <div>
+                                                            <label class="block text-xs font-medium text-slate-600 mb-1">
+                                                                Nama Type
+                                                            </label>
+                                                            <input type="text" name="name"
+                                                                value="{{ $type->name }}"
+                                                                class="w-full rounded-lg border-slate-200 text-sm"
+                                                                required>
+                                                        </div>
+
+                                                        <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
                                                             <button type="button"
                                                                     class="px-3 py-1.5 text-xs rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50"
                                                                     @click="open = false">
@@ -165,17 +159,22 @@
                                                                 Simpan
                                                             </button>
                                                         </div>
-                                                    </div>
-                                                </form>
-
-                                                {{-- Delete type form (hidden, triggered by button above) --}}
-                                                <form action="{{ route('greeting-types.destroy', $type) }}"
-                                                      method="POST" class="hidden">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                </form>
+                                                    </form>
+                                                </div>
                                             </div>
                                         </div>
+
+                                        {{-- Delete Type (di luar modal) --}}
+                                        <form action="{{ route('greeting-types.destroy', $type) }}"
+                                            method="POST"
+                                            onsubmit="return confirm('Hapus type ini?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit"
+                                                    class="px-2 py-1 text-[11px] rounded border border-rose-200 text-rose-600 hover:bg-rose-50">
+                                                Hapus
+                                            </button>
+                                        </form>
                                     </div>
                                 </td>
                             </tr>
@@ -286,71 +285,65 @@
                                     {{ $greeting->type->name ?? '-' }}
                                 </td>
                                 <td class="px-4 py-2 text-right text-xs">
-                                    <div x-data="{ open: false }" class="inline-block">
-                                        <button
-                                            type="button"
-                                            class="px-2 py-1 rounded border border-slate-200 hover:bg-slate-50"
-                                            @click="open = true"
-                                        >
-                                            Edit
-                                        </button>
-
+                                    <div class="flex items-center justify-end gap-2">
                                         {{-- Edit Greeting Modal --}}
-                                        <div
-                                            x-show="open"
-                                            x-cloak
-                                            class="fixed inset-0 z-40 flex items-center justify-center"
-                                        >
-                                            <div class="fixed inset-0 bg-slate-900/60" @click="open = false"></div>
+                                        <div x-data="{ open: false }" class="inline-block">
+                                            <button
+                                                type="button"
+                                                class="px-2 py-1 rounded border border-slate-200 hover:bg-slate-50"
+                                                @click="open = true"
+                                            >
+                                                Edit
+                                            </button>
 
-                                            <div class="relative z-50 w-full max-w-lg mx-4 rounded-2xl bg-white shadow-xl border border-slate-200">
-                                                <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-                                                    <h3 class="text-sm font-semibold text-slate-800">Edit Greeting</h3>
-                                                    <button type="button"
-                                                            class="h-7 w-7 flex items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600"
-                                                            @click="open = false">
-                                                        ✕
-                                                    </button>
-                                                </div>
+                                            <div
+                                                x-show="open"
+                                                x-cloak
+                                                class="fixed inset-0 z-40 flex items-center justify-center"
+                                            >
+                                                <div class="fixed inset-0 bg-slate-900/60" @click="open = false"></div>
 
-                                                <form action="{{ route('greetings.update', $greeting) }}"
-                                                      method="POST"
-                                                      class="px-4 py-4 space-y-4">
-                                                    @csrf
-                                                    @method('POST')
-
-                                                    <div>
-                                                        <label class="block text-xs font-medium text-slate-600 mb-1">
-                                                            Teks Greeting
-                                                        </label>
-                                                        <textarea name="name" rows="3"
-                                                                  class="w-full rounded-lg border-slate-200 text-sm"
-                                                                  required>{{ $greeting->name }}</textarea>
-                                                    </div>
-
-                                                    <div>
-                                                        <label class="block text-xs font-medium text-slate-600 mb-1">
-                                                            Type
-                                                        </label>
-                                                        <select name="id_type" class="w-full rounded-lg border-slate-200 text-sm" required>
-                                                            <option value="">-- pilih type --</option>
-                                                            @foreach($types as $type)
-                                                                <option value="{{ $type->id }}"
-                                                                    @selected($greeting->id_type == $type->id)>
-                                                                    {{ $type->name }}
-                                                                </option>
-                                                            @endforeach
-                                                        </select>
-                                                    </div>
-
-                                                    <div class="flex justify-between items-center pt-2 border-t border-slate-100">
+                                                <div class="relative z-50 w-full max-w-lg mx-4 rounded-2xl bg-white shadow-xl border border-slate-200">
+                                                    <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+                                                        <h3 class="text-sm font-semibold text-slate-800">Edit Greeting</h3>
                                                         <button type="button"
-                                                                class="px-3 py-1.5 text-[11px] rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50"
-                                                                onclick="if (confirm('Hapus greeting ini?')) { this.closest('form').nextElementSibling.submit(); }">
-                                                            Hapus
+                                                                class="h-7 w-7 flex items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                                                                @click="open = false">
+                                                            ✕
                                                         </button>
+                                                    </div>
 
-                                                        <div class="flex gap-2">
+                                                    <form action="{{ route('greetings.update', $greeting) }}"
+                                                        method="POST"
+                                                        class="px-4 py-4 space-y-4">
+                                                        @csrf
+                                                        @method('POST')
+
+                                                        <div>
+                                                            <label class="block text-xs font-medium text-slate-600 mb-1">
+                                                                Teks Greeting
+                                                            </label>
+                                                            <textarea name="name" rows="3"
+                                                                    class="w-full rounded-lg border-slate-200 text-sm"
+                                                                    required>{{ $greeting->name }}</textarea>
+                                                        </div>
+
+                                                        <div>
+                                                            <label class="block text-xs font-medium text-slate-600 mb-1">
+                                                                Type
+                                                            </label>
+                                                            <select name="id_type" class="w-full rounded-lg border-slate-200 text-sm" required>
+                                                                <option value="">-- pilih type --</option>
+                                                                @foreach($types as $type)
+                                                                    <option value="{{ $type->id }}"
+                                                                        @selected($greeting->id_type == $type->id)>
+                                                                        {{ $type->name }}
+                                                                    </option>
+                                                                @endforeach
+                                                            </select>
+                                                        </div>
+
+                                                        <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
                                                             <button type="button"
                                                                     class="px-3 py-1.5 text-xs rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50"
                                                                     @click="open = false">
@@ -361,17 +354,22 @@
                                                                 Simpan
                                                             </button>
                                                         </div>
-                                                    </div>
-                                                </form>
-
-                                                {{-- Delete greeting form (hidden) --}}
-                                                <form action="{{ route('greetings.destroy', $greeting) }}"
-                                                      method="POST" class="hidden">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                </form>
+                                                    </form>
+                                                </div>
                                             </div>
                                         </div>
+
+                                        {{-- Delete Greeting (di luar modal) --}}
+                                        <form action="{{ route('greetings.destroy', $greeting) }}"
+                                            method="POST"
+                                            onsubmit="return confirm('Hapus greeting ini?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit"
+                                                    class="px-3 py-1.5 text-[11px] rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50">
+                                                Hapus
+                                            </button>
+                                        </form>
                                     </div>
                                 </td>
                             </tr>

@@ -106,7 +106,7 @@
                             </button> --}}
                             <button 
                                 type="button"
-                                class="px-3 py-1.5 text-xs rounded-lg bg-[#318f8c] text-white hover:bg-emerald-700 disabled:opacity-40"
+                                class="px-3 py-1.5 text-xs rounded-lg bg-[#318f8c] text-white hover:bg-[#318f8c]-700 disabled:opacity-40"
                                 @click="next()"
                                 :disabled="currentIndex === announcements.length - 1"
                                 x-show="announcements.length > 1"

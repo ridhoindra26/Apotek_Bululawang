@@ -4,7 +4,7 @@
     <div class="sm:col-span-2">
         <label class="block text-xs font-medium text-slate-600 mb-1">Judul Pengumuman</label>
         <input type="text" name="title" value="{{ old('title', $announcement->title ?? '') }}"
-               class="w-full rounded-lg border-slate-200 text-sm"
+               class="w-full border-slate-200 text-sm"
                required>
         @error('title')
             <p class="text-xs text-rose-500 mt-1">{{ $message }}</p>
@@ -14,7 +14,7 @@
     <div>
         <label class="block text-xs font-medium text-slate-600 mb-1">Tanggal Mulai</label>
         <input type="date" name="date_from"
-               value="{{ old('date_from', isset($announcement) ? $announcement->date_from : '') }}"
+               value="{{ old('date_from', isset($announcement) ? optional($announcement->date_from)->toDateString() : '') }}"
                class="w-full rounded-lg border-slate-200 text-sm"
                required>
         @error('date_from')
@@ -25,7 +25,7 @@
     <div>
         <label class="block text-xs font-medium text-slate-600 mb-1">Tanggal Selesai</label>
         <input type="date" name="date_to"
-               value="{{ old('date_to', isset($announcement) && $announcement->date_to ? $announcement->date_to : '') }}"
+               value="{{ old('date_to', isset($announcement) && $announcement->date_to ? optional($announcement->date_to)->toDateString() : '') }}"
                class="w-full rounded-lg border-slate-200 text-sm">
         <p class="text-[11px] text-slate-400 mt-0.5">Kosongkan jika pengumuman berlaku tanpa batas.</p>
         @error('date_to')
@@ -43,20 +43,65 @@
         @enderror
     </div>
 
-    {{-- @dd($selectedIds) --}}
-    <div class="sm:col-span-2">
-        <label class="block text-xs font-medium text-slate-600 mb-1">Target Karyawan</label>
-        <select name="employee_ids[]" multiple size="8"
-                class="w-full rounded-lg border-slate-200 text-sm">
+    {{-- Target Karyawan as checkboxes + Select All --}}
+    @php
+        $checkedIds = old('employee_ids', $selectedIds ?? []);
+    @endphp
+
+    <div class="sm:col-span-2"
+        x-data="{
+            allIds: @js($employees->pluck('id')),
+            selected: @js($checkedIds),
+            selectAll() { this.selected = [...this.allIds]; },
+            clearAll() { this.selected = []; }
+        }"
+    >
+        <div class="flex items-center justify-between mb-1">
+            <label class="block text-xs font-medium text-slate-600">
+                Target Karyawan
+            </label>
+
+            <div class="flex items-center gap-2 text-[11px]">
+                <button type="button"
+                        class="px-2 py-0.5 rounded border border-slate-200 text-slate-600 hover:bg-slate-50"
+                        @click="selectAll()">
+                    Pilih semua
+                </button>
+                <button type="button"
+                        class="px-2 py-0.5 rounded border border-slate-200 text-slate-500 hover:bg-slate-50"
+                        @click="clearAll()">
+                    Hapus semua
+                </button>
+            </div>
+        </div>
+
+        <div class="max-h-64 overflow-y-auto rounded-lg border border-slate-200 p-3 space-y-2 bg-white">
             @foreach ($employees as $employee)
-                <option value="{{ $employee->id }}"
-                    @selected(in_array($employee->id, old('employee_ids', $selectedIds ?? [])))>
-                    {{ $employee->name ?? $employee->full_name ?? 'Employee #'.$employee->id }}
-                </option>
+                <label class="flex items-start gap-2 text-xs text-slate-700">
+                    <input type="checkbox"
+                        name="employee_ids[]"
+                        value="{{ $employee->id }}"
+                        id="emp-{{ $employee->id }}"
+                        class="mt-0.5 rounded border-slate-300"
+                        x-model="selected">
+                    <span>
+                        {{ $employee->name ?? $employee->full_name ?? 'Employee #'.$employee->id }}
+                        @isset($employee->branch)
+                            <span class="text-[10px] text-slate-400">— {{ $employee->branch->name }}</span>
+                        @endisset
+                    </span>
+                </label>
             @endforeach
-        </select>
-        <p class="text-[11px] text-slate-400 mt-0.5">Tekan Ctrl / Cmd untuk memilih lebih dari satu.</p>
+        </div>
+
+        <p class="text-[11px] text-slate-400 mt-0.5">
+            Centang karyawan yang akan menerima pengumuman ini.
+        </p>
+
         @error('employee_ids')
+            <p class="text-xs text-rose-500 mt-1">{{ $message }}</p>
+        @enderror
+        @error('employee_ids.*')
             <p class="text-xs text-rose-500 mt-1">{{ $message }}</p>
         @enderror
     </div>

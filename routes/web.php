@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\jadwalController;
@@ -14,10 +15,33 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\TimeBalanceController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\GreetingController;
+use App\Http\Controllers\CashierDocumentsController;
 
 Route::get('/', function () {
     return redirect()->route('auth.index');
 })->name('login');
+
+// Route::get('/test', function () {
+//     try {
+//         $diskName = 'google_closing_cash2'; // ganti2 kalau mau tes disk lain
+//         $filename = 'test_' . now()->format('Ymd_His') . '.txt';
+
+//         Storage::disk($diskName)->put($filename, 'Halo dari /test-drive');
+
+//         return [
+//             'status'   => 'ok',
+//             'disk'     => $diskName,
+//             'filename' => $filename,
+//         ];
+//     } catch (\Throwable $e) {
+//         // debug kalau error
+//         return response()->json([
+//             'status'  => 'error',
+//             'message' => $e->getMessage(),
+//             'trace'   => str($e->getTraceAsString())->limit(500),
+//         ], 500);
+//     }
+// });
 
 Route::controller(AuthController::class)->group(function () {
     Route::get('/login', 'index')->middleware('guest')->name('auth.index');
@@ -63,6 +87,29 @@ Route::middleware(['auth', 'single.session'])->group(function () {
             Route::get('/jadwal/day', 'dayShow')->name('jadwal.day.show');
             Route::patch('/jadwal/day', 'dayUpdate')->name('jadwal.day.update');
             Route::delete('/jadwal/day', 'destroy')->name('jadwal.destroy');
+        });
+
+    /**
+     * Cashier Documents — user, admin, superadmin
+     */
+    Route::controller(CashierDocumentsController::class)
+        ->middleware('role:user,admin,superadmin')
+        ->group(function () {
+            Route::get('/cashier', 'index')->name('cashier.index');
+            Route::get('/cashier/list', 'list')->name('cashier.list');
+            Route::post('/cashier', 'store')->name('cashier.store');
+            Route::get('/cashier/{id}', 'show')->name('cashier.show');
+            Route::get('/cashier/{id}/edit', 'edit')->name('cashier.edit');
+            Route::post('/cashier/{cashierDocuments}', 'update')->name('cashier.update');
+        });
+
+    /**
+     * Cashier Documents — admin, superadmin
+     */
+    Route::controller(CashierDocumentsController::class)
+        ->middleware('role:admin,superadmin')
+        ->group(function () {
+            Route::post('/cashier/{cashierDocuments}/confirm', 'confirm')->name('cashier.confirm');
         });
 
     /**
