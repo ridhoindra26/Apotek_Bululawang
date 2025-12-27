@@ -113,6 +113,15 @@ Route::middleware(['auth', 'single.session'])->group(function () {
         });
 
     /**
+     * Cashier Documents — superadmin
+     */
+    Route::controller(CashierDocumentsController::class)
+        ->middleware('role:superadmin')
+        ->group(function () {
+            Route::delete('/cashier/{cashierDocuments}', 'destroy')->name('cashier.destroy');
+        });
+
+    /**
      * Master data (Cabang, Karyawan, Libur, Pasangan) — superadmin only
      */
     Route::middleware('role:superadmin')->group(function () {

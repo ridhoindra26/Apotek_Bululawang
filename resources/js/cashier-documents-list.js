@@ -480,8 +480,89 @@ function initPhotoViewer() {
   });
 }
 
+function initCashierDelete() {
+  const buttons = document.querySelectorAll('.btn-delete-doc');
+  if (!buttons.length) return;
+
+  const csrf = document
+    .querySelector('meta[name="csrf-token"]')
+    ?.getAttribute('content');
+
+  buttons.forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const deleteUrl = btn.getAttribute('data-delete-url');
+      const label = btn.getAttribute('data-label') || 'dokumen kasir';
+
+      if (!deleteUrl) return;
+
+      const result = await Swal.fire({
+        title: 'Hapus dokumen?',
+        html: `
+          <div style="font-size:13px;color:#4b5563;text-align:left;">
+            Anda akan menghapus <span style="font-weight:600;">${label}</span>.<br>
+            Semua foto yang terkait dengan dokumen ini juga akan dihapus.<br><br>
+            Tindakan ini <span style="color:#b91c1c;font-weight:600;">tidak dapat dibatalkan</span>.
+          </div>
+        `,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Ya, hapus',
+        cancelButtonText: 'Batal',
+        confirmButtonColor: '#e11d48',
+        cancelButtonColor: '#6b7280',
+        customClass: {
+          popup: 'rounded-2xl',
+          confirmButton: 'rounded-full px-4 py-2 text-xs',
+          cancelButton: 'rounded-full px-4 py-2 text-xs',
+        },
+      });
+
+      if (!result.isConfirmed) return;
+
+      const formData = new FormData();
+      if (csrf) formData.append('_token', csrf);
+      formData.append('_method', 'DELETE');
+
+      try {
+        const response = await fetch(deleteUrl, {
+          method: 'POST', // karena kita pakai _method=DELETE
+          body: formData,
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+        });
+
+        if (!response.ok) {
+          const text = await response.text();
+          console.error('Delete error:', text);
+          throw new Error('Gagal menghapus dokumen.');
+        }
+
+        await Swal.fire({
+          icon: 'success',
+          title: 'Terhapus',
+          text: 'Dokumen kasir berhasil dihapus.',
+          confirmButtonColor: '#318f8c',
+          customClass: { popup: 'rounded-2xl' },
+        });
+
+        window.location.reload();
+      } catch (e) {
+        await Swal.fire({
+          icon: 'error',
+          title: 'Gagal',
+          text: e.message || 'Terjadi kesalahan saat menghapus dokumen.',
+          confirmButtonColor: '#ef4444',
+          customClass: { popup: 'rounded-2xl' },
+        });
+      }
+    });
+  });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   initCashierConfirm();
   initCashierEdit();
   initPhotoViewer();
+  initCashierDelete();
 });

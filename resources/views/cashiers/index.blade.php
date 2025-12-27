@@ -161,6 +161,7 @@
                     <input type="file"
                         name="closing_cash_photo"
                         accept="image/*"
+                        capture="environment"
                         class="w-full cursor-pointer rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-600 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white hover:file:bg-emerald-700 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
                         required
                         @change="preview = $event.target.files[0] ? URL.createObjectURL($event.target.files[0]) : null">
@@ -203,6 +204,7 @@
                     <input type="file"
                         name="deposit_slip_photo"
                         accept="image/*"
+                        capture="environment"
                         class="w-full cursor-pointer rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-700 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white hover:file:bg-slate-900 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
                         @change="preview = $event.target.files[0] ? URL.createObjectURL($event.target.files[0]) : null">
 
@@ -245,6 +247,7 @@
                                     type="file"
                                     :name="name + '[]'"  {{-- blood_check_photo[] --}}
                                     accept="image/*"
+                                    capture="environment"
                                     class="w-full cursor-pointer rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700
                                         file:mr-3 file:rounded-lg file:border-0 file:bg-slate-700 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white
                                         hover:file:bg-slate-900 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
@@ -310,6 +313,7 @@
                                     type="file"
                                     :name="name + '[]'"  {{-- petty_cash_photo[] --}}
                                     accept="image/*"
+                                    capture="environment"
                                     class="w-full cursor-pointer rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700
                                         file:mr-3 file:rounded-lg file:border-0 file:bg-slate-700 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white
                                         hover:file:bg-slate-900 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"

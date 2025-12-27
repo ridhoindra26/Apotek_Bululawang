@@ -264,6 +264,17 @@
                                 Edit Foto & Catatan
                             </button>
                         @endif
+
+                        @if(auth()->user()->role === 'superadmin')
+                            <button
+                                type="button"
+                                class="btn-delete-doc inline-flex items-center rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-[10px] font-semibold text-rose-700 hover:bg-rose-100"
+                                data-delete-url="{{ route('cashier.destroy', $doc) }}"
+                                data-label="{{ $summaryLabel }}"
+                            >
+                                Hapus
+                            </button>
+                        @endif
                     </div>
                 @endauth
                     @if($doc->confirmed_by || $doc->confirmed_at)
@@ -428,6 +439,17 @@
                                             data-photo-items='@json($photoItems)'
                                         >
                                             Edit Foto & Catatan
+                                        </button>
+                                    @endif
+
+                                    @if(auth()->user()->role === 'superadmin')
+                                        <button
+                                            type="button"
+                                            class="btn-delete-doc mt-1 inline-flex items-center rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-[10px] font-semibold text-rose-700 hover:bg-rose-100 focus:outline-none focus:ring-2 focus:ring-rose-100"
+                                            data-delete-url="{{ route('cashier.destroy', $doc) }}"
+                                            data-label="{{ $summaryLabel }}"
+                                        >
+                                            Hapus
                                         </button>
                                     @endif
                                 @endauth
