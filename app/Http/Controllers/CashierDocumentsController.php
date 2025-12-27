@@ -23,7 +23,10 @@ class CashierDocumentsController extends Controller
 
         $branches = Branches::orderBy('name')->get(['id','name']);
 
-        $defaultBranch = Schedules::where('date', $today)->where('id_employee', auth()->user()->id_employee)->get(['id_branch']);
+        $defaultBranch = Schedules::whereDate('date', $today)
+            ->where('id_employee', auth()->user()->id_employee)
+            ->pluck('id_branch')
+            ->first();
 
         return view('cashiers.index', [
             'defaultShift' => $defaultShift,
@@ -383,19 +386,33 @@ class CashierDocumentsController extends Controller
     }
 
 
-    public function destroy(CashierDocuments $cashierDocuments)
+    public function destroy( Request $request, CashierDocuments $cashierDocuments)
     {
-        if (!in_array(auth()->user()->role, ['admin', 'superadmin'])) {
+        $user = auth()->user();
+        if (! $user) {
             abort(403);
         }
 
-        if ($cashierDocuments->photo_path) {
-            Storage::disk('public')->delete($cashierDocuments->photo_path);
+        $cashierDocuments->load('photos');
+
+        // hapus file fisik dari storage
+        foreach ($cashierDocuments->photos as $photo) {
+            try {
+                // saat ini kamu menyimpan pakai $file->store($diskName, 'public')
+                // jadi path relatif di disk 'public'
+                Storage::disk('public')->delete($photo->photo_path);
+            } catch (\Throwable $e) {
+                Log::error('Gagal menghapus foto dokumen kasir dengan id ' . $cashierDocuments->id . ': ' . $e->getMessage());
+            }
         }
 
         $cashierDocuments->delete();
 
-        return back()->with('success', 'Data foto berhasil dihapus.');
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Dokumen kasir berhasil dihapus.']);
+        }
+
+        return back()->with('success', 'Dokumen kasir berhasil dihapus.');
     }
 
     // ==== FEATURE: ADMIN KONFIRMASI ====
