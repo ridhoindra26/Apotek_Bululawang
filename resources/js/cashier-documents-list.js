@@ -466,12 +466,12 @@ function initPhotoViewer() {
           }
 
           // allow click on main image to open full tab (optional)
-          if (imgMain) {
-            imgMain.style.cursor = 'pointer';
-            imgMain.addEventListener('click', () => {
-              window.open(photos[currentIndex], '_blank');
-            });
-          }
+          // if (imgMain) {
+          //   imgMain.style.cursor = 'pointer';
+          //   imgMain.addEventListener('click', () => {
+          //     window.open(photos[currentIndex], '_blank');
+          //   });
+          // }
 
           updateView();
         },

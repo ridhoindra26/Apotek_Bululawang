@@ -22,14 +22,14 @@
     {{-- Header --}}
     <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-            <h2 class="text-sm font-semibold text-slate-800">Dokumen Kasir Terupload</h2>
-            <p class="text-xs text-slate-500">
+            <h2 class="text-lg font-semibold text-slate-800">Dokumen Kasir Terupload</h2>
+            <p class="text-sm text-slate-500">
                 Riwayat upload kertas tutup kasir, bukti setoran, cek darah, dan kas kecil.
             </p>
         </div>
 
         <a href="{{ route('cashier.index') }}"
-           class="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50">
+           class="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50">
             ← Kembali ke Form Upload
         </a>
     </div>
@@ -39,27 +39,27 @@
         <form method="GET" action="{{ route('cashier.list') }}" class="grid gap-3 md:grid-cols-4 lg:grid-cols-6">
             {{-- Tanggal dari --}}
             <div>
-                <label class="block text-[11px] font-semibold text-slate-700 mb-1">Tanggal dari</label>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Tanggal dari</label>
                 <input type="date"
                        name="date_from"
                        value="{{ $filters['date_from'] ?? '' }}"
-                       class="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-800 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-100">
+                       class="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-100">
             </div>
 
             {{-- Tanggal sampai --}}
             <div>
-                <label class="block text-[11px] font-semibold text-slate-700 mb-1">Tanggal sampai</label>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Tanggal sampai</label>
                 <input type="date"
                        name="date_to"
                        value="{{ $filters['date_to'] ?? '' }}"
-                       class="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-800 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-100">
+                       class="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-100">
             </div>
 
             {{-- Tipe dokumen --}}
             <div>
-                <label class="block text-[11px] font-semibold text-slate-700 mb-1">Tipe</label>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Tipe</label>
                 <select name="type"
-                        class="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-800 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-100">
+                        class="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-100">
                     <option value="">Semua</option>
                     <option value="closing_cash" @selected(($filters['type'] ?? '') === 'closing_cash')>Kertas Tutup Kasir</option>
                     <option value="deposit_slip" @selected(($filters['type'] ?? '') === 'deposit_slip')>Bukti Setoran</option>
@@ -70,9 +70,9 @@
 
             {{-- Shift --}}
             <div>
-                <label class="block text-[11px] font-semibold text-slate-700 mb-1">Shift</label>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Shift</label>
                 <select name="shift"
-                        class="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-800 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-100">
+                        class="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-100">
                     <option value="">Semua</option>
                     <option value="Pagi"  @selected(($filters['shift'] ?? '') === 'Pagi')>Pagi</option>
                     <option value="Siang" @selected(($filters['shift'] ?? '') === 'Siang')>Siang</option>
@@ -81,9 +81,9 @@
 
             {{-- Status --}}
             <div>
-                <label class="block text-[11px] font-semibold text-slate-700 mb-1">Status</label>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Status</label>
                 <select name="status"
-                        class="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-800 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-100">
+                        class="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-100">
                     <option value="">Semua</option>
                     <option value="pending"   @selected(($filters['status'] ?? '') === 'pending')>Menunggu</option>
                     <option value="confirmed" @selected(($filters['status'] ?? '') === 'confirmed')>Terkonfirmasi</option>
@@ -93,9 +93,9 @@
 
             {{-- Cabang (untuk admin) --}}
             <div>
-                <label class="block text-[11px] font-semibold text-slate-700 mb-1">Cabang</label>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Cabang</label>
                 <select name="branch_id"
-                        class="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-800 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-100">
+                        class="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-100">
                     <option value="">Semua</option>
                     @foreach($branches as $branch)
                         <option value="{{ $branch->id }}"
@@ -108,22 +108,22 @@
 
             {{-- Search (deskripsi / nama kasir) --}}
             <div class="md:col-span-2 lg:col-span-2">
-                <label class="block text-[11px] font-semibold text-slate-700 mb-1">Cari</label>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Cari</label>
                 <input type="text"
                        name="search"
                        value="{{ $filters['search'] ?? '' }}"
                        placeholder="Cari deskripsi atau nama kasir..."
-                       class="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-800 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-100">
+                       class="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-100">
             </div>
 
             {{-- Buttons --}}
             <div class="md:col-span-2 lg:col-span-2 flex items-end gap-2 mt-1">
                 <button type="submit"
-                        class="flex-1 rounded-full bg-[#318f8c] px-4 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-[#318f8c]">
+                        class="flex-1 !rounded-full bg-[#318f8c] px-4 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-[#318f8c]">
                     Terapkan Filter
                 </button>
                 <a href="{{ route('cashier.list') }}"
-                   class="rounded-full border border-slate-200 bg-white px-4 py-1.5 text-xs font-medium text-slate-600 shadow-sm hover:bg-slate-50">
+                   class="rounded-full border border-slate-200 bg-white px-4 py-1.5 text-sm font-medium text-slate-600 shadow-sm hover:bg-slate-50">
                     Reset
                 </a>
             </div>
@@ -176,15 +176,15 @@
 
                 <div class="flex-1 space-y-1">
                     <div class="flex items-center justify-between gap-2">
-                        <div class="text-[11px] font-semibold text-slate-800">
+                        <div class="text-xs font-semibold text-slate-800">
                             {{ $doc->date->format('d M Y') }} · {{ $doc->shift }}
                         </div>
-                        <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] {{ $badgeColor }}">
+                        <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-sm {{ $badgeColor }}">
                             {{ ucfirst($doc->status_label ?? $doc->status) }}
                         </span>
                     </div>
 
-                    <div class="flex flex-wrap gap-1 text-[10px] text-slate-500">
+                    <div class="flex flex-wrap gap-1 text-xs text-slate-500">
                         <span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5">
                             @switch($doc->type)
                                 @case('closing_cash') Kertas Tutup Kasir @break
@@ -193,20 +193,23 @@
                                 @case('petty_cash')   Kas Kecil @break
                             @endswitch
                         </span>
-                        @if($doc->cashier)
-                            <span class="inline-flex items-center rounded-full bg-slate-50 px-2 py-0.5">
-                                Kasir: {{ $doc->cashier->name }}
+                        @if($doc->branch)
+                            <span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5">
+                                {{ $doc->branch->name }}
                             </span>
                         @endif
-                        @if($doc->branch)
-                            <span class="inline-flex items-center rounded-full bg-slate-50 px-2 py-0.5">
-                                Cabang: {{ $doc->branch->name }}
+                        @if($doc->cashier)
+                            <span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5">
+                                {{ $doc->cashier->name }}
                             </span>
                         @endif
                     </div>
 
                     @if($doc->description)
-                        <p class="text-[11px] text-slate-600 line-clamp-2">
+                        <div class="text-xs font-semibold text-slate-700 mt-2">
+                            Catatan
+                        </div>
+                        <p class="text-sm text-slate-600 line-clamp-2">
                             {{ $doc->description }}
                         </p>
                     @endif
@@ -240,7 +243,7 @@
                         @if($isAdmin)
                             <button
                                 type="button"
-                                class="btn-confirm-doc inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[10px] font-semibold text-emerald-700 hover:bg-emerald-100"
+                                class="btn-confirm-doc inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-700 hover:bg-emerald-100"
                                 data-id="{{ $doc->id }}"
                                 data-status="{{ $doc->status }}"
                                 data-note="{{ e($doc->admin_note) }}"
@@ -254,7 +257,7 @@
                         @if($isAdmin || $isOwner)
                             <button
                                 type="button"
-                                class="btn-edit-doc inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-[10px] font-semibold text-slate-700 hover:bg-slate-50"
+                                class="btn-edit-doc inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                                 data-id="{{ $doc->id }}"
                                 data-description="{{ e($doc->description) }}"
                                 data-label="{{ $summaryLabel }}"
@@ -268,7 +271,7 @@
                         @if(auth()->user()->role === 'superadmin')
                             <button
                                 type="button"
-                                class="btn-delete-doc inline-flex items-center rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-[10px] font-semibold text-rose-700 hover:bg-rose-100"
+                                class="btn-delete-doc inline-flex items-center rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-sm font-semibold text-rose-700 hover:bg-rose-100"
                                 data-delete-url="{{ route('cashier.destroy', $doc) }}"
                                 data-label="{{ $summaryLabel }}"
                             >
@@ -278,9 +281,10 @@
                     </div>
                 @endauth
                     @if($doc->confirmed_by || $doc->confirmed_at)
-                        <p class="text-[10px] text-slate-400">
+                        <p class="text-sm text-slate-400 mt-2">
+                            <span class="font-semibold">Dikonfirmasi</span>
                             @if($doc->confirmed_by)
-                                Oleh: {{ $doc->confirmed_by }}
+                                {{ $doc->confirmed_by }}
                             @endif
                             @if($doc->confirmed_at)
                                 · {{ $doc->confirmed_at->format('d M Y H:i') }}

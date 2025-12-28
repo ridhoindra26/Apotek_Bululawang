@@ -266,23 +266,15 @@
 
                                 <button
                                     type="button"
-                                    class="text-[10px] text-rose-500 hover:text-rose-600"
+                                    class="text-sm text-rose-500 hover:text-rose-600"
                                     @click="removeField(index)"
-                                    x-show="fields.length > 1"
+                                    x-show="field.preview && fields.length > 1"
                                 >
                                     Hapus
                                 </button>
                             </div>
                         </div>
                     </template>
-
-                    <button
-                        type="button"
-                        class="mt-1 inline-flex items-center rounded-full border border-dashed border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
-                        @click="addField()"
-                    >
-                        + Tambah Foto Cek Darah
-                    </button>
 
                     @error('blood_check_photo')
                         <p class="text-[11px] text-rose-500 mt-1">{{ $message }}</p>
@@ -334,21 +326,13 @@
                                     type="button"
                                     class="text-sm text-rose-500 hover:text-rose-600"
                                     @click="removeField(index)"
-                                    x-show="fields.length > 1"
+                                    x-show="field.preview && fields.length > 1"
                                 >
                                     Hapus
                                 </button>
                             </div>
                         </div>
                     </template>
-
-                    <button
-                        type="button"
-                        class="mt-1 inline-flex items-center rounded-full border border-dashed border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
-                        @click="addField()"
-                    >
-                        + Tambah Foto Kas Kecil
-                    </button>
 
                     @error('petty_cash_photo')
                         <p class="text-[11px] text-rose-500 mt-1">{{ $message }}</p>
