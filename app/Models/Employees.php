@@ -11,7 +11,31 @@ class Employees extends Model
 
     protected $table = 'employees';
 
-    protected $fillable = ['name', 'id_branch', 'default_pagi_shift_time_id', 'default_siang_shift_time_id', 'id_role', 'date_of_birth', 'date_start'];
+    protected $fillable = [
+        'name',
+        'id_branch',
+        'default_pagi_shift_time_id',
+        'default_siang_shift_time_id',
+        'id_role',
+        'date_of_birth',
+        'date_start',
+
+        // payroll fields
+        'base_salary',
+        'bank_name',
+        'bank_account_number',
+        'bank_account_holder',
+        'payroll_email',
+        'payroll_active',
+    ];
+
+    protected $casts = [
+        'date_of_birth' => 'date',
+        'date_start' => 'date',
+        'base_salary' => 'integer',
+        'payroll_active' => 'boolean',
+    ];
+
 
     public function branches()
     {
@@ -51,5 +75,11 @@ class Employees extends Model
         return $this->belongsToMany(Announcement::class, 'announcement_employee', 'id_employee', 'announcement_id')
             ->withTimestamps();
     }
+
+    public function payroll_items()
+    {
+        return $this->hasMany(PayrollItem::class, 'id_employee');
+    }
+
 
 }
