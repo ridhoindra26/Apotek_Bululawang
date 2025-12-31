@@ -16,6 +16,10 @@ use App\Http\Controllers\TimeBalanceController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\GreetingController;
 use App\Http\Controllers\CashierDocumentsController;
+use App\Http\Controllers\PayrollPeriodController;
+use App\Http\Controllers\PayrollTransferTemplateController;
+use App\Http\Controllers\PayrollEmployeeController;
+use App\Http\Controllers\PayrollUserController;
 
 Route::get('/', function () {
     return redirect()->route('auth.index');
@@ -253,4 +257,61 @@ Route::middleware(['auth', 'single.session'])->group(function () {
         });
     });
 
+    Route::controller(PayrollPeriodController::class)->group(function () {
+        Route::middleware(['role:superadmin'])->group(function () {
+            // Periods
+            Route::get('/payroll/periods', 'index')->name('payroll.periods.index');
+            Route::post('/payroll/periods', 'store')->name('payroll.periods.store');
+            Route::get('/payroll/periods/{id}', 'show')->name('payroll.periods.show');
+
+            // Period actions
+            Route::post('/payroll/periods/{id}/generate-items', 'generateItems')->name('payroll.periods.generate-items');
+            Route::post('/payroll/periods/{id}/lock', 'lock')->name('payroll.periods.lock');
+
+            // Export (CSV download)
+            Route::post('/payroll/periods/{id}/export-csv', 'exportCsv')->name('payroll.periods.export-csv');
+
+            // Line items (allowance/deduction)
+            Route::post('/payroll/item-lines', 'storeLine')->name('payroll.item-lines.store');
+            Route::put('/payroll/item-lines/{id}', 'updateLine')->name('payroll.item-lines.update');
+            Route::delete('/payroll/item-lines/{id}', 'destroyLine')->name('payroll.item-lines.destroy');
+
+            Route::post('/payroll/periods/{id}/mark-paid', 'markPaid')->name('payroll.periods.mark-paid');
+            Route::get('/payroll/items/{id}/share-whatsapp', 'shareWhatsapp')->name('payroll.items.share-whatsapp');
+
+            Route::get('/payroll/items/{id}/invoice', 'invoice')->name('payroll.items.invoice');
+        });
+    });
+
+    Route::controller(PayrollTransferTemplateController::class)->group(function () {
+        Route::middleware(['role:superadmin'])->group(function () {
+
+            Route::get('/payroll/templates', 'index')->name('payroll.templates.index');
+            Route::post('/payroll/templates', 'store')->name('payroll.templates.store');
+            Route::put('/payroll/templates/{id}', 'update')->name('payroll.templates.update');
+            Route::delete('/payroll/templates/{id}', 'destroy')->name('payroll.templates.destroy');
+
+        });
+    });
+
+    Route::controller(PayrollEmployeeController::class)->group(function () {
+        Route::middleware(['role:superadmin'])->group(function () {
+
+            Route::get('/payroll/employees', 'index')->name('payroll.employees.index');
+            Route::put('/payroll/employees/{id}', 'update')->name('payroll.employees.update');
+
+        });
+    });
+
+    Route::controller(PayrollUserController::class)->group(function () {
+        Route::middleware(['role:admin,user'])->group(function () {
+
+            // My Payroll
+            Route::get('/my-payroll', 'index')->name('payroll.user.index');
+            Route::get('/my-payroll/{periodId}', 'show')->name('payroll.user.show');
+
+            // Slip (requires login; employee can only see their own)
+            Route::get('/my-payroll/{periodId}/slip', 'slip')->name('payroll.user.slip');
+        });
+    });
 });
