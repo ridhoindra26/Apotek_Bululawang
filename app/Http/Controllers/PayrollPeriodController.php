@@ -6,6 +6,7 @@ use App\Models\PayrollPeriod;
 use App\Models\PayrollItem;
 use App\Models\PayrollItemLine;
 use App\Models\PayrollTransferTemplate;
+use App\Models\Employees;
 
 use App\Services\Payroll\PayrollGenerator;
 use App\Services\Payroll\PayrollCalculator;
@@ -54,22 +55,36 @@ class PayrollPeriodController extends Controller
             'items.lines' => fn ($q) => $q->orderBy('type')->orderBy('id'),
         ])->findOrFail($id);
 
+        $employees = Employees::query()
+            ->orderBy('name')
+            ->get(['id', 'name', 'id_branch']);
+
         $templates = PayrollTransferTemplate::query()->orderBy('name')->get();
 
-        return view('payroll.periods.show', compact('period', 'templates'));
+        return view('payroll.periods.show', compact('period', 'templates', 'employees'));
     }
 
-    public function generateItems($id, PayrollGenerator $generator)
+    public function generateItems(Request $request, $id, PayrollGenerator $generator)
     {
         $period = PayrollPeriod::findOrFail($id);
 
+        if ($period->status !== 'draft') {
+            return redirect()->back()->with('error', 'Only draft periods can generate items.');
+        }
+
+        $data = $request->validate([
+            'employee_ids' => ['required', 'array', 'min:1'],
+            'employee_ids.*' => ['integer', 'exists:employees,id'],
+        ]);
+
         try {
-            $count = $generator->generateForPeriod($period);
-            return redirect()->back()->with('success', "Generated {$count} payroll items.");
+            $result = $generator->generateForPeriod($period, $data['employee_ids']); // implement below
+            return redirect()->back()->with('success', "Generated: {$result['created']} (skipped existing: {$result['skipped']}).");
         } catch (\Throwable $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }
     }
+
 
     public function lock($id)
     {
