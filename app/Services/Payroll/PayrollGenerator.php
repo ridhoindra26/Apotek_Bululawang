@@ -9,55 +9,46 @@ use Illuminate\Support\Facades\DB;
 
 class PayrollGenerator
 {
-    public function generateForPeriod(PayrollPeriod $period): int
+    public function generateForPeriod(PayrollPeriod $period, array $employeeIds): array
     {
-        if ($period->status !== 'draft') {
-            throw new \RuntimeException('Payroll period must be draft to generate items.');
-        }
+        $created = 0;
+        $skipped = 0;
 
-        return DB::transaction(function () use ($period) {
+        $employees = Employees::query()
+            ->whereIn('id', $employeeIds)
+            ->get();
 
-            $employees = Employees::query()
-                ->where('payroll_active', true)
-                ->get();
+        DB::transaction(function () use ($period, $employees, &$created, &$skipped) {
+            foreach ($employees as $emp) {
 
-            $created = 0;
-
-            foreach ($employees as $employee) {
-                // Ensure rekening exists for transfer
-                if (empty($employee->bank_account_number)) {
-                    continue;
-                }
-
-                // Avoid overwriting if already generated
                 $exists = PayrollItem::query()
                     ->where('payroll_period_id', $period->id)
-                    ->where('id_employee', $employee->id)
+                    ->where('id_employee', $emp->id)
                     ->exists();
 
                 if ($exists) {
+                    $skipped++;
                     continue;
                 }
 
-                $base = (int) ($employee->base_salary ?? 0);
-
                 PayrollItem::create([
                     'payroll_period_id' => $period->id,
-                    'id_employee' => $employee->id,
+                    'id_employee' => $emp->id,
 
-                    'rekening_snapshot' => $employee->bank_account_number,
-                    'email_snapshot' => $employee->payroll_email,
-                    'base_salary_snapshot' => $base,
+                    // snapshots (adjust to your columns)
+                    'base_salary_snapshot' => (int) ($emp->base_salary ?? 0),
+                    'rekening_snapshot' => (string) ($emp->bank_account_number ?? ''),
+                    'email_snapshot' => (string) ($emp->payroll_email ?? ''),
 
                     'allowance_total' => 0,
                     'deduction_total' => 0,
-                    'net_pay' => $base,
+                    'net_pay' => (int) ($emp->base_salary ?? 0),
                 ]);
 
                 $created++;
             }
-
-            return $created;
         });
+
+        return compact('created', 'skipped');
     }
 }
