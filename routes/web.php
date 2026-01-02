@@ -314,4 +314,8 @@ Route::middleware(['auth', 'single.session'])->group(function () {
             Route::get('/my-payroll/{periodId}/slip', 'slip')->name('payroll.user.slip');
         });
     });
+
+    Route::get('/profile', [karyawanController::class, 'profile'])->name('profile.index');
+    Route::get('/profile/password', [karyawanController::class, 'editPassword'])->name('profile.password.edit');
+    Route::put('/profile/password', [karyawanController::class, 'updatePassword'])->name('profile.password.update');
 });
