@@ -115,4 +115,42 @@ class karyawanController extends Controller
         return redirect()->route('karyawan.index')->with('success', 'Karyawan deleted successfully.');
         
     }
+
+    public function profile(Request $request)
+    {
+        $user = $request->user();
+
+        // If you have relation: $user->employee
+        // Load it safely (won't break if not defined)
+        $user->loadMissing('employee');
+
+        return view('profile.index', compact('user'));
+    }
+
+    public function editPassword()
+    {
+        return view('profile.password');
+    }
+
+    public function updatePassword(Request $request)
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'current_password' => ['required', 'current_password'],
+            'password' => ['required', 'confirmed'],
+        ], [
+            'current_password.current_password' => 'Password lama tidak sesuai.',
+            'password.confirmed' => 'Konfirmasi password baru tidak sama.',
+        ]);
+
+        // Let the User model mutator hash it
+        $user->password = $validated['password'];
+        $user->save();
+
+        // Optional: invalidate other sessions
+        // auth()->logoutOtherDevices($validated['password']);
+
+        return back()->with('success', 'Password berhasil diperbarui.');
+    }
 }
