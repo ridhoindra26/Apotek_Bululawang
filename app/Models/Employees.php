@@ -19,6 +19,7 @@ class Employees extends Model
         'id_role',
         'date_of_birth',
         'date_start',
+        'phone',
 
         // payroll fields
         'base_salary',
