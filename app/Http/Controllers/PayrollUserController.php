@@ -13,13 +13,15 @@ class PayrollUserController extends Controller
     {
         $employeeId = auth()->user()->id_employee;
         abort_if(!$employeeId, 403, 'User is not linked to an employee.');
-
-        // Show only paid periods (recommended)
+    
         $periods = PayrollPeriod::query()
             ->where('status', 'paid')
+            ->whereHas('items', function ($q) use ($employeeId) {
+                $q->where('id_employee', $employeeId);
+            })
             ->orderByDesc('date_from')
             ->paginate(12);
-
+    
         return view('payroll.user.index', compact('periods'));
     }
 

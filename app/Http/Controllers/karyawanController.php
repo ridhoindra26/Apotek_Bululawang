@@ -7,6 +7,8 @@ use App\Models\Branches;
 use App\Models\Roles;
 
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Log;
 
 class karyawanController extends Controller
 {
@@ -85,23 +87,51 @@ class karyawanController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        $validated = $request->validate([
+            'name'          => ['required', 'string', 'max:255'],
+            'id_branch'     => ['required', Rule::exists('branches', 'id')],
+            'id_role'       => ['nullable', Rule::exists('roles', 'id')],
+
+            'phone'         => ['nullable', 'string', 'max:30'],
+            'payroll_email' => ['nullable', 'email', 'max:255'],
+
+            'date_of_birth' => ['nullable', 'date'],
+            'date_start'    => ['nullable', 'date'],
+        ], [
+            'name.required'          => 'Nama wajib diisi.',
+            'id_branch.required'     => 'Cabang wajib dipilih.',
+            'id_branch.exists'       => 'Cabang tidak valid.',
+            'id_role.exists'         => 'Role/Jabatan tidak valid.',
+            'payroll_email.email'    => 'Format email payroll tidak valid.',
+            'date_of_birth.date'     => 'Tanggal lahir tidak valid.',
+            'date_start.date'        => 'Tanggal masuk tidak valid.',
+        ]);
+
         try {
-            $request->validate([
-                'name' => 'required|string|max:255',
-                'id_branch' => 'required|exists:App\Models\Branches,id',
-                'id_role' => 'nullable|exists:App\Models\Roles,id',
-            ]);
-
             $karyawan = Employees::findOrFail($id);
+
             $karyawan->update([
-                'name' => $request->input('name'),
-                'id_branch' => $request->input('id_branch'),
-                'id_role' => $request->input('id_role'),
+                'name'          => $validated['name'],
+                'id_branch'     => $validated['id_branch'],
+                'id_role'       => $validated['id_role'] ?? null,
+                'phone'         => $validated['phone'] ?? null,
+                'payroll_email' => $validated['payroll_email'] ?? null,
+                'date_of_birth' => $validated['date_of_birth'] ?? null,
+                'date_start'    => $validated['date_start'] ?? null,
             ]);
 
-            return redirect()->route('karyawan.index')->with('success', 'Karyawan updated successfully.');
+            return redirect()
+                ->route('karyawan.index')
+                ->with('success', 'Karyawan berhasil diperbarui.');
         } catch (\Throwable $e) {
-            return response()->json(['error' => $e->getMessage()], $e->getCode() ?: 422);
+            Log::error('Update karyawan gagal', [
+                'employee_id' => $id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return back()
+                ->withInput()
+                ->with('error', 'Gagal memperbarui karyawan. Silakan coba lagi.');
         }
     }
 
