@@ -101,7 +101,7 @@
                                 </span>
                             </td>
                             <td class="px-4 py-3 text-right">
-                                <a href="{{ route('payroll.user.show', $p->id) }}"
+                                <a href="{{ route('payroll.user.slip', $p->id) }}"
                                    class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50">
                                     Open
                                 </a>
