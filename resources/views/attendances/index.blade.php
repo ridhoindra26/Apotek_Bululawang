@@ -124,9 +124,15 @@
 
               <td class="py-2 pr-4">
                 <button type="button"
-                        class="rounded-full border px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                        class="rounded-full border px-3 py-1 text-xs font-medium text-emerald-700 hover:bg-slate-50"
                         onclick="handleMinutesPanel({{ $a->id }}, {{ $a->is_confirmed ? 1 : 0 }})">
                   {{ $a->is_confirmed ? 'Edit' : 'Confirm' }}
+                </button>
+                <button type="button"
+                        class="rounded-full border px-3 py-1 text-xs font-medium text-rose-700 hover:bg-rose-100"
+                        data-id="{{ $a->id }}"
+                        onclick="handleResetChoice(this)">
+                  Reset
                 </button>
               </td>
             </tr>

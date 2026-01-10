@@ -4,6 +4,140 @@ import Swal from "sweetalert2";
   // make sure Swal is available globally (optional but nice)
   window.Swal = window.Swal || Swal;
 
+    // ---------------- RESET (CHOOSE CHECK-IN / CHECK-OUT) ----------------
+  const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
+  const RESET_ENDPOINT = '/admin/attendances/reset';
+
+  async function postReset(attendanceId, mode) {
+    if (!RESET_ENDPOINT) throw new Error('Reset endpoint is not defined.');
+    if (!csrf) throw new Error('CSRF token not found.');
+
+    const res = await fetch(RESET_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': csrf,
+      },
+      body: JSON.stringify({
+        attendance_id: attendanceId,
+        mode: mode,
+      }),
+    });
+
+    let json = null;
+    try { json = await res.json(); } catch (_) {}
+
+    if (!res.ok) {
+      // try to show laravel validation errors if any
+      const msg =
+        json?.message ||
+        (json?.errors ? Object.values(json.errors).flat().join(' ') : null) ||
+        'Failed to reset.';
+      throw new Error(msg);
+    }
+
+    return json;
+  }
+
+  // Accept either: handleResetChoice(this) OR handleResetChoice(123)
+  window.handleResetChoice = async function (arg) {
+    const attendanceId =
+      typeof arg === 'number'
+        ? arg
+        : parseInt(arg?.dataset?.id || '0', 10);
+
+    if (!attendanceId) {
+      console.error('Invalid attendance id for reset.');
+      return;
+    }
+
+    if (!window.Swal) {
+      // fallback if Swal missing
+      const mode = prompt('Type: check_in / check_out', 'check_in');
+      if (!mode) return;
+      const ok = confirm(`Reset ${mode}?`);
+      if (!ok) return;
+
+      try {
+        await postReset(attendanceId, mode);
+        window.location.reload();
+      } catch (e) {
+        alert(e.message || 'Failed to reset.');
+      }
+      return;
+    }
+
+    // Step 1: choose mode
+    const pick = await window.Swal.fire({
+      title: 'Reset which part?',
+      input: 'radio',
+      inputOptions: {
+        check_in: 'Check-in',
+        check_out: 'Check-out',
+      },
+      inputValidator: (value) => (!value ? 'Please select one option.' : undefined),
+      showCancelButton: true,
+      confirmButtonText: 'Continue',
+      cancelButtonText: 'Cancel',
+      confirmButtonColor: '#318f8c',
+      cancelButtonColor: '#6b7280',
+    });
+
+    if (!pick.isConfirmed) return;
+    const mode = pick.value;
+
+    // Step 2: confirm
+    const conf = await window.Swal.fire({
+      title: 'Are you sure?',
+      text:
+        mode === 'check_in'
+          ? 'This will reset check-in time and photo, and will affect calculations.'
+          : mode === 'check_out'
+          ? 'This will reset check-out time and photo, and will affect calculations.'
+          : 'This will reset both check-in and check-out (time + photo) and affect calculations.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, reset',
+      cancelButtonText: 'Cancel',
+      confirmButtonColor: '#318f8c',
+      cancelButtonColor: '#6b7280',
+    });
+
+    if (!conf.isConfirmed) return;
+
+    // Step 3: execute
+    try {
+      window.Swal.fire({
+        title: 'Resetting...',
+        didOpen: () => window.Swal.showLoading(),
+        showConfirmButton: false,
+        allowOutsideClick: false,
+      });
+
+      await postReset(attendanceId, mode);
+
+      window.Swal.fire({
+        icon: 'success',
+        title: 'Reset done',
+        timer: 1000,
+        showConfirmButton: false,
+      });
+
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
+      window.Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: err.message || 'Failed to reset.',
+        confirmButtonColor: '#318f8c',
+      });
+    }
+  };
+
+  // Minutes Panel
+
   const panel = document.getElementById('minutes-panel');
   const sheet = document.getElementById('minutes-panel-sheet');
 

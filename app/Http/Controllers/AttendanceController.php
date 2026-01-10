@@ -14,6 +14,7 @@ use App\Models\TimeLedgers;
 use App\Models\Branches;
 use App\Models\Greetings;
 
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 
 class AttendanceController extends Controller
@@ -498,4 +499,82 @@ class AttendanceController extends Controller
 
         return response()->json(['ok'=>true, 'img' => $event->photos->first()->url()]);
     }
+
+    public function resetById(Request $request)
+    {
+        $validated = $request->validate([
+            'attendance_id' => ['required', 'integer', 'exists:attendances,id'],
+            'mode' => ['required', 'in:check_in,check_out'],
+        ]);
+
+        $attendance = Attendances::findOrFail($validated['attendance_id']);
+
+        // Optional (recommended)
+        // $this->authorize('update', $attendance);
+
+        $mode = $validated['mode'];
+
+        DB::transaction(function () use ($attendance, $mode) {
+
+            // Load both events once + photos (avoid repeated queries)
+            $events = $attendance->events()
+                ->whereIn('type', ['check_in', 'check_out'])
+                ->with('photos')
+                ->get()
+                ->keyBy('type');
+
+            $checkInEvent  = $events->get('check_in');
+            $checkOutEvent = $events->get('check_out');
+
+            // Helper: delete photos (db + storage) and delete event row
+            $deleteEventWithPhotos = function ($event) {
+                if (!$event) return;
+
+                foreach ($event->photos as $photo) {
+                    // Adjust column name if not "path"
+                    if (!empty($photo->path)) {
+                        Storage::disk('public')->delete($photo->path);
+                    }
+                    $photo->delete();
+                }
+
+                $event->delete();
+            };
+
+            if ($mode === 'check_out') {
+                // Reset ONLY checkout: delete checkout event+photos
+                $deleteEventWithPhotos($checkOutEvent);
+
+                $attendance->update([
+                    'check_out_at' => null,
+                    'work_minutes' => null,      // keep your preference (null)
+                    'overtime_minutes' => 0,
+                    'early_leave_minutes' => 0,
+                    'status' => 'in_progress',
+                ]);
+
+                return;
+            }
+
+            // mode === 'check_in' => reset ALL: delete both events+photos
+            $deleteEventWithPhotos($checkInEvent);
+            $deleteEventWithPhotos($checkOutEvent);
+
+            $attendance->update([
+                'check_in_at' => null,
+                'check_out_at' => null,
+                'work_minutes' => null,        // keep your preference (null)
+
+                'late_minutes' => 0,
+                'early_leave_minutes' => 0,
+                'early_checkin_minutes' => 0,
+                'overtime_minutes' => 0,
+
+                'status' => 'not_checked_in',
+            ]);
+        });
+
+        return response()->json(['message' => 'Reset success.'], 200);
+    }
+
 }
