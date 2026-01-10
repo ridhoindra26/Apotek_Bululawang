@@ -255,12 +255,19 @@
             <tr class="border-b hover:bg-slate-50">
               <td class="py-2 pr-4">{{ $a->work_date->format('Y-m-d') }}</td>
               <td class="py-2 pr-4">
-                <button type="button"
-                        class="text-[#318f8c] hover:underline js-photo-fetch"
-                        data-url="{{ route('attendance.photo', ['type' => 'check_in', 'id' => $a->id]) }}"
-                        data-caption="Check-In — {{ $a->work_date->format('Y-m-d') }} {{ $a->check_in_at->format('H:i') }}">
-                  {{ $a->check_in_at->format('H:i') }}
-                </button>
+                @php
+                  $inTime = $a->check_in_at?->format('H:i');
+                @endphp
+                @if ($inTime)
+                  <button type="button"
+                          class="text-[#318f8c] hover:underline js-photo-fetch"
+                          data-url="{{ route('attendance.photo', ['type' => 'check_in', 'id' => $a->id]) }}"
+                          data-caption="Check-In — {{ $a->work_date->format('Y-m-d') }} {{ $a->check_in_at->format('H:i') }}">
+                    {{ $inTime }}
+                  </button>
+                @else
+                    {{ $inTime ?? '—' }}
+                @endif
             </td>
 
             <td class="py-2 pr-4">

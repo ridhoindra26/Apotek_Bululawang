@@ -234,6 +234,7 @@ Route::middleware(['auth', 'single.session'])->group(function () {
             Route::get('/admin/attendances/{attendance}/{type}/photo', 'photoUrl')
                 ->where('type', 'check_in|check_out')
                 ->name('attendances.photoUrl');
+            Route::post('/admin/attendances/reset', 'resetById')->name('attendances.resetById');
         });
     });
 
