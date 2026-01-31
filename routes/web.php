@@ -281,6 +281,7 @@ Route::middleware(['auth', 'single.session'])->group(function () {
             Route::get('/payroll/items/{id}/share-whatsapp', 'shareWhatsapp')->name('payroll.items.share-whatsapp');
 
             Route::get('/payroll/items/{id}/invoice', 'invoice')->name('payroll.items.invoice');
+            Route::get('/payroll/items/{id}/send-invoice-whatsapp', 'sendInvoiceWhatsapp')->name('payroll.items.send-invoice-whatsapp');
         });
     });
 
