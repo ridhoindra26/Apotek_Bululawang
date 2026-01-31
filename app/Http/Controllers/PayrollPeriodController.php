@@ -259,31 +259,6 @@ class PayrollPeriodController extends Controller
         return redirect()->back()->with('success', 'Payroll period marked as paid.');
     }
 
-
-    public function shareWhatsapp($id)
-    {
-        $item = PayrollItem::with(['employee', 'period'])->findOrFail($id);
-
-        $phone = $item->employee->phone ?? null;
-        if (!$phone) {
-            return redirect()->back()->with('error', 'Employee phone number is empty.');
-        }
-
-        $phoneDigits = preg_replace('/\D+/', '', $phone);
-
-        // Login-required slip URL (employee will be asked to login)
-        $slipUrl = route('payroll.user.slip', ['periodId' => $item->payroll_period_id]);
-
-        $periodLabel = $item->period->name ?? $item->period->code;
-
-        // Do NOT include salary amount in WA message (privacy)
-        $message = "Slip gaji {$periodLabel} sudah tersedia.\nSilakan login dan buka: {$slipUrl}";
-
-        $waUrl = 'https://wa.me/' . $phoneDigits . '?text=' . urlencode($message);
-
-        return redirect()->away($waUrl);
-    }
-
     public function invoice($id)
     {
         $item = PayrollItem::with([
@@ -294,4 +269,63 @@ class PayrollPeriodController extends Controller
 
         return view('payroll.admin.invoice', compact('item'));
     }
+
+    public function sendInvoiceWhatsapp($id)
+    {
+        $item = PayrollItem::with(['employee', 'period'])->findOrFail($id);
+
+        if ($item->period->status !== 'paid') {
+            return redirect()->back()->with('error', 'Only PAID periods can be sent.');
+        }
+
+        $rawPhone = $item->employee->phone ?? null;
+        $name = $item->employee->name ?? "GAADA NAMANYA BJIR";
+        $waNumber = $this->normalizeIdWhatsappNumber($rawPhone);
+
+        if (!$waNumber) {
+            return redirect()->back()->with(
+                'error',
+                'Nomor telepon tidak valid. Gunakan format 62xxxxxxxxxx (contoh: 62812xxxxxxx) atau 08xxxxxxxxxx.'
+            );
+        }
+
+        // Send USER slip URL (not admin)
+        $slipUrl = route('payroll.user.slip', ['periodId' => $item->payroll_period_id]);
+        $periodLabel = $item->period->name ?? $item->period->code;
+
+        $message = "Hiii {$name},\nSlip gaji sudah tersedia dan bisa dicek melalui website Apotek.\n\nSilakan login ke akun masing-masing, lalu buka menu Gaji.Jika ada kendala akses atau data tidak sesuai, bisa hubungi RIDHO ya.\n\nTerima kasih.";
+
+        $waUrl = 'https://wa.me/' . $waNumber . '?text=' . urlencode($message);
+
+        return redirect()->away($waUrl);
+    }
+
+    /**
+     * Normalize Indonesian phone number to WhatsApp format: digits only, starts with 62.
+     * Accepts: 62..., +62..., 0..., 8...
+     */
+    private function normalizeIdWhatsappNumber(?string $raw): ?string
+    {
+        if (!$raw) return null;
+
+        $digits = preg_replace('/\D+/', '', $raw);
+        if (!$digits) return null;
+
+        if (str_starts_with($digits, '62')) {
+            $wa = $digits;
+        } elseif (str_starts_with($digits, '0')) {
+            $wa = '62' . substr($digits, 1);
+        } elseif (str_starts_with($digits, '8')) {
+            $wa = '62' . $digits;
+        } else {
+            return null;
+        }
+
+        // Basic sanity length check (Indonesia numbers usually fit here)
+        $len = strlen($wa);
+        if ($len < 10 || $len > 15) return null;
+
+        return $wa;
+    }
+
 }
