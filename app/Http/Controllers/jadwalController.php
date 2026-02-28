@@ -54,7 +54,8 @@ class jadwalController extends Controller
                     'tahun'        => Carbon::parse($r->date)->year,
                     'shift'        => $r->shift,
                     'libur'        => (bool) $r->is_vacation,
-                    'id_role'      => $r->employees->roles?->index
+                    'id_role'      => $r->employees->roles?->index,
+                    'id_shift_time'=> $r->id_shift_time
                 ];
             })->toArray();
 
@@ -66,6 +67,7 @@ class jadwalController extends Controller
 
         // Build calendar view (fungsi sama)
         $calendars = $this->buildCalendars($jadwalFlat);
+        // return response()->json($calendars, 200);
 
         return view('jadwal.index', compact(
             'bulan',
@@ -89,12 +91,19 @@ class jadwalController extends Controller
             // Selalu pakai shift asli (Pagi/Siang), walau libur
             $shift = $row['shift'] ?? 'Pagi';
 
+            if ($shift === 'Pagi') {
+                $shiftTimeId = $row['id_shift_time'] ?? 1;
+            } else {
+                $shiftTimeId = $row['id_shift_time'] ?? 3;
+            }
+
             $cal[$day][$branchKey][$shift][] = [
                 'id' => $row['id'] ?? null,
                 'nama_karyawan' => $row['karyawan'] ?? '-',
                 'libur'         => (bool)($row['libur'] ?? false),
                 'id_karyawan'   => $row['id_karyawan'] ?? null,
-                'id_role'       => $row['id_role'] ?? null
+                'id_role'       => $row['id_role'] ?? null,
+                'id_shift_time' => $shiftTimeId
             ];
         }
         
@@ -403,7 +412,8 @@ class jadwalController extends Controller
                 'tahun'        => (int)$d->year,
                 'shift'        => $r->shift,                // 'Pagi' / 'Siang'
                 'libur'        => (bool)$r->is_vacation,
-                'id_role'      => $r->employees->roles?->index
+                'id_role'      => $r->employees->roles?->index,
+                'id_shift_time'=> $r->id_shift_time
             ];
         })->toArray();
 
