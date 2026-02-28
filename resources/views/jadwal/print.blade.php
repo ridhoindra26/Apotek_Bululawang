@@ -131,6 +131,7 @@
                                         @foreach ($employees as $emp)
                                             @php
                                                 $name = $emp['nama_karyawan'] ?? $emp['karyawan'] ?? '—';
+                                                $shiftTime = $emp['id_shift_time'] ?? 0;
                                                 $isLibur = (bool)($emp['libur'] ?? false);
                                                 $dotClass = $isLibur ? 'dot-libur' : ($shift === 'Pagi' ? 'dot-pagi' : 'dot-siang');
                                             @endphp
@@ -138,6 +139,9 @@
                                                 <span class="dot {{ $dotClass }}"></span>
                                                 <span>{{ $name }}</span>
                                                 @if($isLibur)@endif
+                                                @if ($shiftTime === 5)
+                                                    <span>(Middle)</span>
+                                                @endif
                                             </div>
                                         @endforeach
                                     @else
