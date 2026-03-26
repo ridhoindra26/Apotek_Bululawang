@@ -8,6 +8,8 @@ use App\Models\Attendances;
 use App\Models\TimeBalances;
 use App\Models\Schedules;
 use App\Models\Announcement;
+use App\Models\Employees;
+use App\Models\User;
 
 
 class dashboardController extends Controller
@@ -18,6 +20,11 @@ class dashboardController extends Controller
     public function index()
     {
         $user  = Auth::user();
+
+        if ($user && $user->hasRole('superadmin')) {
+            return $this->superadmin();
+        }
+
         $today = today()->toDateString(); // sama dengan now()->toDateString()
 
         // Default values
@@ -67,6 +74,81 @@ class dashboardController extends Controller
             'balance_minutes',
             'todayIsVacation',
             'announcements'
+        ));
+    }
+
+    /**
+     * Show the form for creating a new resource for superadmin.
+     */
+    public function superadmin()
+    {
+        $closestBirthdayEmployees = Employees::orderByClosestBirthday()->limit(5)->get();
+
+        $today = now()->toDateString();
+        $soonDate = now()->addDays(90)->toDateString();
+
+        $totalMedicines = 10;
+        $lowStockCount = 5;
+        $expiringSoonCount = 2;
+
+        $todaySales = 3;
+        $todayTransactionCount = 1;
+
+        $attendanceTodayCount = Attendances::whereDate('created_at', $today)->count();
+        $employeeCount = Employees::count();
+
+        $activeSupplierCount = 13;
+        $userCount = User::count();
+
+        $cashInToday = 56;
+
+        $recentSales = [
+            'total' => 48,
+            'created_at' => now()->toDateTimeString(),
+        ];
+
+        $criticalMedicines = [
+            [
+                'name' => 'Paracetamol',
+                'stock' => 10,
+                'minimum_stock' => 20,
+            ],
+            [
+                'name' => 'Ibuprofen',
+                'stock' => 15,
+                'minimum_stock' => 30,
+            ],
+            [
+                'name' => 'Metformin',
+                'stock' => 12,
+                'minimum_stock' => 25,
+            ],
+            [
+                'name' => 'Amlodipin',
+                'stock' => 8,
+                'minimum_stock' => 18,
+            ],
+            [
+                'name' => 'Captopril',
+                'stock' => 5,
+                'minimum_stock' => 15,
+            ],
+        ];
+
+        return view('dashboard.superadmin', compact(
+            'totalMedicines',
+            'lowStockCount',
+            'expiringSoonCount',
+            'todaySales',
+            'todayTransactionCount',
+            'attendanceTodayCount',
+            'employeeCount',
+            'activeSupplierCount',
+            'userCount',
+            'cashInToday',
+            'recentSales',
+            'criticalMedicines',
+            'closestBirthdayEmployees'
         ));
     }
 

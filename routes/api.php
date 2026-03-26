@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 
 // use App\Http\Controllers\jadwalController;
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\ShortUrlController;
 
 /*
 |--------------------------------------------------------------------------
@@ -26,4 +27,10 @@ Route::controller(AttendanceController::class)->group(function () {
     Route::post('/attendance/checkin', 'checkIn')->middleware(['auth', 'single.session'])->name('attendance.checkin');
     Route::post('/attendance/checkout', 'checkOut')->middleware(['auth', 'single.session'])->name('attendance.checkout');
     Route::post('/attendance/dummy', 'dummy')->name('attendance.dummy');
+});
+
+Route::prefix('public')->group(function () {
+    // Short URL
+    Route::get('/short-url/{code}', [ShortUrlController::class, 'shortUrl']);
+    Route::post('/short-url/visit', [ShortUrlController::class, 'shortUrlVisit']); 
 });
