@@ -329,7 +329,4 @@
     </div>
 </div>
 @endsection
-
-@push('scripts')
-    @vite('resources/js/shortener/index.js')
 @endpush
