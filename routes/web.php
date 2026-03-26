@@ -20,6 +20,9 @@ use App\Http\Controllers\PayrollPeriodController;
 use App\Http\Controllers\PayrollTransferTemplateController;
 use App\Http\Controllers\PayrollEmployeeController;
 use App\Http\Controllers\PayrollUserController;
+use App\Http\Controllers\HealthCheckController;
+use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\ShortUrlController;
 
 Route::get('/', function () {
     return redirect()->route('auth.index');
@@ -202,6 +205,15 @@ Route::middleware(['auth', 'single.session'])->group(function () {
             Route::delete('/greetings/{greeting}', 'destroyGreeting')->name('greetings.destroy');
         });
 
+        Route::controller(ShortUrlController::class)->group(function () {
+            Route::get('/shortener', 'index')->name('shortener.index');
+            Route::get('/shortener/create', 'create')->name('shortener.create');
+            Route::post('/shortener', 'store')->name('shortener.store');
+            Route::get('/shortener/{shortUrl}', 'show')->name('shortener.show');
+            Route::get('/shortener/{shortUrl}/edit', 'edit')->name('shortener.edit');
+            Route::put('/shortener/{shortUrl}', 'update')->name('shortener.update');
+            Route::delete('/shortener/{shortUrl}', 'destroy')->name('shortener.destroy');
+        });
 
     });
 
@@ -317,7 +329,40 @@ Route::middleware(['auth', 'single.session'])->group(function () {
         });
     });
 
+    // Route::controller(HealthCheckController::class)->group(function () {
+    //     Route::middleware(['role:superadmin'])->group(function () {
+    //         Route::delete('customers/{customer}/health-checks/{healthCheck}','destroy')->name('customers.health-checks.destroy');
+    //     });
+    // });
+
     Route::get('/profile', [karyawanController::class, 'profile'])->name('profile.index');
     Route::get('/profile/password', [karyawanController::class, 'editPassword'])->name('profile.password.edit');
     Route::put('/profile/password', [karyawanController::class, 'updatePassword'])->name('profile.password.update');
 });
+
+// Route::controller(HealthCheckController::class)->group(function () {
+//     Route::post('customers/{customer}/health-checks', 'store')->name('customers.health-checks.store');
+//     Route::patch('customers/{customer}/health-checks/{healthCheck}/reminded','markReminded')->name('customers.health-checks.reminded');
+// });
+
+// Route::resource('customers', CustomerController::class);
+
+    Route::resource('health-checks', HealthCheckController::class)->except(['show']);
+
+    Route::get('health-checks', [HealthCheckController::class, 'index'])->name('health-checks.index');
+    Route::post('health-checks', [HealthCheckController::class, 'store'])->name('health-checks.store');
+
+    // POS helpers (JSON)
+    Route::get('health-checks/customers/search', [CustomerController::class, 'search'])->name('customers.search');
+    Route::post('health-checks/customers/quick-store', [CustomerController::class, 'quickStore'])->name('customers.quickStore');
+    
+    // Mark reminded from anywhere
+    Route::patch('health-checks/{health_check}/reminded', [HealthCheckController::class, 'markReminded'])
+        ->name('health-checks.reminded');
+
+    // Due list
+    Route::get('health-checks/due', [HealthCheckController::class, 'due'])
+        ->name('health-checks.due');
+
+    // Customers (sub)
+    Route::resource('customers', CustomerController::class);

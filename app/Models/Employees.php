@@ -82,5 +82,60 @@ class Employees extends Model
         return $this->hasMany(PayrollItem::class, 'id_employee');
     }
 
+    public function scopeOrderByClosestBirthday($query)
+    {
+        $currentYearExpr = "YEAR(CURDATE())";
+        $nextYearExpr = "YEAR(CURDATE()) + 1";
 
+        $birthdayThisYearExpr = "
+            STR_TO_DATE(
+                CONCAT(
+                    {$currentYearExpr}, '-',
+                    LPAD(MONTH(date_of_birth), 2, '0'), '-',
+                    LPAD(
+                        LEAST(
+                            DAY(date_of_birth),
+                            DAY(LAST_DAY(CONCAT({$currentYearExpr}, '-', LPAD(MONTH(date_of_birth), 2, '0'), '-01')))
+                        ),
+                        2,
+                        '0'
+                    )
+                ),
+                '%Y-%m-%d'
+            )
+        ";
+
+        $birthdayNextYearExpr = "
+            STR_TO_DATE(
+                CONCAT(
+                    {$nextYearExpr}, '-',
+                    LPAD(MONTH(date_of_birth), 2, '0'), '-',
+                    LPAD(
+                        LEAST(
+                            DAY(date_of_birth),
+                            DAY(LAST_DAY(CONCAT({$nextYearExpr}, '-', LPAD(MONTH(date_of_birth), 2, '0'), '-01')))
+                        ),
+                        2,
+                        '0'
+                    )
+                ),
+                '%Y-%m-%d'
+            )
+        ";
+
+        $nextBirthdayExpr = "
+            CASE
+                WHEN {$birthdayThisYearExpr} >= CURDATE() THEN {$birthdayThisYearExpr}
+                ELSE {$birthdayNextYearExpr}
+            END
+        ";
+
+        return $query
+            ->whereNotNull('date_of_birth')
+            ->select('employees.*')
+            ->selectRaw("{$nextBirthdayExpr} as next_birthday")
+            ->selectRaw("DATEDIFF({$nextBirthdayExpr}, CURDATE()) as days_to_birthday")
+            ->orderBy('days_to_birthday')
+            ->orderByRaw("MONTH(date_of_birth) asc, DAY(date_of_birth) asc");
+    }
 }
