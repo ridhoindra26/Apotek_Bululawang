@@ -41,7 +41,4 @@
     </div>
 </div>
 @endsection
-
-@push('scripts')
-    @vite('resources/js/shortener/form.js')
 @endpush
