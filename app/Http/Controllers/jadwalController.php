@@ -412,7 +412,8 @@ class jadwalController extends Controller
                 'tahun'        => (int)$d->year,
                 'shift'        => $r->shift,                // 'Pagi' / 'Siang'
                 'libur'        => (bool)$r->is_vacation,
-                'id_role'      => $r->employees->roles?->index
+                'id_role'      => $r->employees->roles?->index,
+                'id_shift_time' => $r->id_shift_time
             ];
         })->toArray();
 
