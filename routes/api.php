@@ -34,3 +34,8 @@ Route::prefix('public')->group(function () {
     Route::get('/short-url/{code}', [ShortUrlController::class, 'shortUrl']);
     Route::post('/short-url/visit', [ShortUrlController::class, 'shortUrlVisit']); 
 });
+
+Route::prefix('private')->group(function () {
+    // Short URL
+    Route::post('/qrcode/generate', [ShortUrlController::class, 'generateQRCode']); 
+});
