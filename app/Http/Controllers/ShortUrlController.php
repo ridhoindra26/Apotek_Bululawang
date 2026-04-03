@@ -183,11 +183,13 @@ class ShortUrlController extends Controller
     }
 
     // PUBLIC API
-    public function shortUrl(string $code)
+    public function shortUrl(Request $request, string $code)
     {
         $shortUrl = ShortUrls::query()
-            ->where('short_code', $code)
-            ->orWhere('custom_slug', $code)
+            ->where(function ($query) use ($code) {
+                $query->where('short_code', $code)
+                    ->orWhere('custom_slug', $code);
+            })
             ->first();
 
         if (!$shortUrl) {
@@ -210,6 +212,17 @@ class ShortUrlController extends Controller
                 'message' => 'Short link has expired.',
             ], 410);
         }
+
+        // increment click count
+        $shortUrl->increment('click_count');
+
+        // create visit log
+        $shortUrl->visits()->create([
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'referer' => $request->header('referer'),
+            'source_app' => 'public-shortener',
+        ]);
 
         return response()->json([
             'success' => true,
@@ -254,6 +267,26 @@ class ShortUrlController extends Controller
 
         return response()->json([
             'success' => true,
+        ]);
+    }
+
+    public function generateQRCode( Request $request, ShortUrlQrCodeService $qrCodeService) {
+
+        $validated = $request->validate([
+            'link' => ['required', 'url'],
+        ], [
+            'link.required' => 'Link is required.',
+            'link.url' => 'Link must be a valid URL.',
+        ]);
+        
+        // return response()->json($validated['link'], 200);
+
+        $qr = $qrCodeService->overrideGenerate($validated['link']);
+
+        return response($qr, 200, [
+            'Content-Type' => 'image/svg+xml',
+            'Content-Disposition' => 'inline; filename="qr-code.svg"',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate',
         ]);
     }
 }

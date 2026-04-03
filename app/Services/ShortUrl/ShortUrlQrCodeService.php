@@ -29,6 +29,19 @@ class ShortUrlQrCodeService
         return $path;
     }
 
+    public function overrideGenerate(string $link): string
+    {
+        $qrSvg = QrCode::format('svg')
+            ->size(300)
+            ->margin(1)
+            ->errorCorrection('H')
+            ->generate($link);
+
+        $qrSvgWithLogo = $this->insertLogoIntoSvg($qrSvg);
+
+        return $qrSvgWithLogo;
+    }
+
     public function regenerate(ShortUrls $shortUrl): string
     {
         if ($shortUrl->qr_code_path && Storage::disk('public')->exists($shortUrl->qr_code_path)) {

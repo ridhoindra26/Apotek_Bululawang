@@ -14,7 +14,7 @@ class CashierDocumentsController extends Controller
 {
     public function index()
     {
-        if (! in_array(auth()->user()->id_employee, [5,6,7,8,11,21,25,31,32,33])) {
+        if (! in_array(auth()->user()->id_employee, [5,6,7,8,11,21,25,31,32,33,39])) {
             abort(403);
         }
         $today = now();
