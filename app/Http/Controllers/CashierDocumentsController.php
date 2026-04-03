@@ -56,7 +56,7 @@ class CashierDocumentsController extends Controller
 
     public function list(Request $request)
     {
-        if (! in_array(auth()->user()->id_employee, [5,6,7,8,11,21,25,31,32,33])) {
+        if (! in_array(auth()->user()->id_employee, [5,6,7,8,11,21,25,31,32,33,39])) {
             abort(403);
         }
         $query = CashierDocuments::query()
@@ -112,7 +112,7 @@ class CashierDocumentsController extends Controller
 
     public function store(Request $request)
     {
-        if (! in_array(auth()->user()->id_employee, [5,6,7,8,11,21,25,31,32,33])) {
+        if (! in_array(auth()->user()->id_employee, [5,6,7,8,11,21,25,31,32,33,39])) {
             abort(403);
         }
         $user = auth()->user();        
