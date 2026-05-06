@@ -56,7 +56,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (confirm.isConfirmed) {
           // Prepare form data
           const formData = new FormData();
-          formData.append("photo", file);
+          // formData.append("photo", file);
           formData.append("_token", document.querySelector('meta[name="csrf-token"]').content);
 
           // Optional: timeout protection
