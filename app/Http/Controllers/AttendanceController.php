@@ -174,9 +174,9 @@ class AttendanceController extends Controller
             return response()->json(['message' => 'Not linked to employee.'], 422);
         }
 
-        $request->validate([
-            'photo' => ['required', 'image'], // 5MB
-        ]);
+        // $request->validate([
+        //     'photo' => ['required', 'image'], // 5MB
+        // ]);
 
         $today = today();
 
@@ -241,9 +241,9 @@ class AttendanceController extends Controller
             return response()->json(['message' => 'Not linked to employee.'], 422);
         }
 
-        $request->validate([
-            'photo' => ['required', 'image'], // 5MB
-        ]);
+        // $request->validate([
+        //     'photo' => ['required', 'image'], // 5MB
+        // ]);
 
         $today = today();
 
