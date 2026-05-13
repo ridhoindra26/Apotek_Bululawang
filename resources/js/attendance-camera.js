@@ -32,6 +32,67 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   };
 
+  async function compressImage(file, {
+    maxWidth = 900,
+    maxHeight = 900,
+    quality = 0.65,
+    mimeType = "image/jpeg",
+  } = {}) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
+
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+
+        let { width, height } = img;
+
+        // Keep aspect ratio
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error("Failed to compress image"));
+              return;
+            }
+
+            const compressedFile = new File(
+              [blob],
+              file.name.replace(/\.\w+$/, ".jpg"),
+              {
+                type: mimeType,
+                lastModified: Date.now(),
+              }
+            );
+
+            resolve(compressedFile);
+          },
+          mimeType,
+          quality
+        );
+      };
+
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error("Failed to load image"));
+      };
+
+      img.src = objectUrl;
+    });
+  }
+
   async function captureAndSubmit(type) {
     return new Promise((resolve) => {
       // Trigger camera
@@ -55,13 +116,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (confirm.isConfirmed) {
           // Prepare form data
-          const formData = new FormData();
-          // formData.append("photo", file);
-          formData.append("_token", document.querySelector('meta[name="csrf-token"]').content);
+          const compressedPhoto = await compressImage(file, {
+            maxWidth: 900,
+            maxHeight: 900,
+            quality: 0.65,
+          });
 
-          // Optional: timeout protection
-          const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 30000); // 30s
+          const formData = new FormData();
+          formData.append("photo", compressedPhoto);
+          formData.append("_token", document.querySelector('meta[name="csrf-token"]').content);
 
           try {
             setButtonsDisabled(true);
