@@ -13,14 +13,60 @@
 
       <div class="flex-1 overflow-y-auto p-4">
         <div class="grid grid-cols-2 gap-3 text-sm">
-          <div class="rounded-lg bg-slate-50 p-3"><p class="text-rose-700 font-bold">Late</p><p id="mp-late" class="font-semibold">0</p></div>
+          <div class="rounded-lg bg-slate-50 p-3"><p class="text-rose-700 font-bold">Raw Late</p><p id="mp-late" class="font-semibold">0</p></div>
           <div class="rounded-lg bg-slate-50 p-3"><p class="text-rose-700 font-bold">Early Leave</p><p id="mp-early-leave" class="font-semibold">0</p></div>
           <div class="rounded-lg bg-slate-50 p-3"><p class="text-emerald-700 font-bold">Early Check-in</p><p id="mp-early-in" class="font-semibold">0</p></div>
-          <div class="rounded-lg bg-slate-50 p-3"><p class="text-emerald-700 font-bold">Overtime</p><p id="mp-ot" class="font-semibold">0</p></div>
+          <div class="rounded-lg bg-slate-50 p-3"><p class="text-emerald-700 font-bold">Raw Overtime</p><p id="mp-ot" class="font-semibold">0</p></div>
         </div>
 
         <form id="minutes-form" class="mt-5 space-y-4">
           <input type="hidden" id="mp-id" value="">
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <div class="flex items-center justify-between gap-3">
+              <div>
+                <p class="text-sm font-semibold text-slate-700">Count as Late?</p>
+                <p class="text-xs text-slate-500">
+                  Aktifkan jika keterlambatan ini dihitung sebagai telat resmi.
+                </p>
+              </div>
+
+              <label class="relative inline-flex cursor-pointer items-center">
+                <input type="checkbox" id="mp-is-late" class="peer sr-only">
+                <div class="peer h-6 w-11 rounded-full bg-slate-300 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:bg-rose-600 peer-checked:after:translate-x-5"></div>
+              </label>
+            </div>
+
+            <p id="mp-is-late-hint" class="mt-2 text-xs text-slate-500"></p>
+            <div id="mp-late-type-wrapper">
+              <label class="block text-sm text-slate-600 mb-1">Late Type</label>
+
+              <div class="grid grid-cols-2 gap-2">
+                <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50">
+                  <input
+                    type="radio"
+                    name="mp-late-type"
+                    value="with_permission"
+                    class="text-[#318f8c] focus:ring-[#318f8c]"
+                  >
+                  <span>Dengan Izin</span>
+                </label>
+
+                <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50">
+                  <input
+                    type="radio"
+                    name="mp-late-type"
+                    value="without_permission"
+                    class="text-[#318f8c] focus:ring-[#318f8c]"
+                  >
+                  <span>Tanpa Izin</span>
+                </label>
+              </div>
+
+              <p id="mp-late-type-hint" class="text-xs text-slate-500 mt-1">
+                Wajib dipilih jika absensi dihitung sebagai telat.
+              </p>
+            </div>
+          </div>
           <div>
             <label class="block text-sm text-slate-600 mb-1">Penalty Minutes</label>
             <input type="number" min="0" id="mp-penalty"

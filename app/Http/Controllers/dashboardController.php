@@ -66,6 +66,34 @@ class dashboardController extends Controller
             })
             ->orderByDesc('date_from')
             ->get();
+
+            // Late Summary
+            $startDate = now()->startOfMonth()->toDateString();
+            $endDate   = now()->endOfMonth()->toDateString();
+
+            $lateSummary = Attendances::where('id_employee', $employeeId)
+                ->whereBetween('work_date', [$startDate, $endDate])
+                ->where('is_late', true)
+                ->selectRaw("
+                    COUNT(*) as late_count,
+                    SUM(CASE WHEN late_type = 'with_permission' THEN 1 ELSE 0 END) as late_with_permission_count,
+                    SUM(CASE WHEN late_type = 'without_permission' THEN 1 ELSE 0 END) as late_without_permission_count
+                ")
+                ->first();
+
+            $lateDetails = Attendances::where('id_employee', $employeeId)
+                ->whereBetween('work_date', [$startDate, $endDate])
+                ->where('is_late', true)
+                ->select([
+                    'id',
+                    'work_date',
+                    'check_in_at',
+                    'penalty_minutes',
+                    'is_late',
+                ])
+                ->orderByDesc('work_date')
+                ->take(3)
+                ->get();
         }
 
         return view('dashboard', compact(
@@ -73,7 +101,9 @@ class dashboardController extends Controller
             'recentAttendances',
             'balance_minutes',
             'todayIsVacation',
-            'announcements'
+            'announcements',
+            'lateSummary',
+            'lateDetails'
         ));
     }
 
