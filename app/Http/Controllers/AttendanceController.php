@@ -145,9 +145,12 @@ class AttendanceController extends Controller
             'accuracy_m'    => $request->input('acc'),   // optional
         ]);
 
+        return $event;
+
         if ($request->hasFile('photo')) {
             $file = $request->file('photo');
-            $path = $file->store('attendance/'.today()->format('Y/m/d'), 'public');
+            $path = $file->store('Apotek/TUTUP KASIR Bllw1 (File responses)/Foto Kertas Tutup Kasir (File responses)', 'google_closing_cash2');
+            // $path = $file->store('attendance/'.today()->format('Y/m/d'), 'public');
 
             AttendancePhotos::create([
                 'id_attendance_event' => $event->id,
@@ -371,6 +374,9 @@ class AttendanceController extends Controller
                 'overtime_minutes' => $attendance->overtime_minutes ?? 0,
                 'penalty_minutes' => $attendance->penalty_minutes ?? 0,
                 'overtime_applied_minutes' => $attendance->overtime_applied_minutes ?? 0,
+                'is_confirmed' => $attendance->is_confirmed,
+                'is_late' => $attendance->is_late,
+                'late_type' => $attendance->late_type,
             ],
             'suggestions' => [
                 'penalty' => $penaltySuggested,
@@ -385,6 +391,8 @@ class AttendanceController extends Controller
         $cap = max(($attendance->early_checkin_minutes ?? 0) + ($attendance->overtime_minutes ?? 0), 0);
 
         $data = $request->validate([
+            'is_late'                  => ['required','boolean'],
+            'late_type' => ['nullable', 'required_if:is_late,true', 'in:with_permission,without_permission'],
             'penalty_minutes'          => ['required','integer','min:0'],
             'overtime_applied_minutes' => ['required','integer','min:0','max:'.$cap],
             'note'                     => ['nullable','string','max:500'],
@@ -392,17 +400,6 @@ class AttendanceController extends Controller
             'overtime_applied_minutes.max' =>
                 "Overtime applied cannot exceed total (Early Check-in + Overtime) = $cap minute(s).",
         ]);
-
-        // return response()->json([
-        //     'ok' => true,
-        //     'message' => 'Minutess confirmed & balances updated.',
-        //     'data' => $data,
-        //     'attendance' => $attendance,
-        //     'delta' => [
-        //         'penalty' => $data['penalty_minutes'] - $attendance->penalty_minutes,
-        //         'overtime' => $data['overtime_applied_minutes'] - $attendance->overtime_applied_minutes,
-        //     ]
-        // ]);
 
         DB::transaction(function () use ($attendance, $data) {
             $employeeId = $attendance->id_employee;
@@ -419,6 +416,8 @@ class AttendanceController extends Controller
             $attendance->overtime_applied_minutes = $newOT;
             $attendance->notes = $data['note'];
             $attendance->is_confirmed = true;
+            $attendance->is_late = $data['is_late'];
+            $attendance->late_type = $data['is_late'] ? $data['late_type'] : null;
             $attendance->save();
 
             // --- Calculate deltas
