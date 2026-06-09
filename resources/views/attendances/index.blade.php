@@ -8,20 +8,6 @@
 
     {{-- BREADCRUMB --}}
     <nav class="flex items-center justify-between mb-4 text-sm text-slate-600">
-      {{-- <ol class="flex items-center space-x-2">
-        <li>
-          <a href="{{ route('dashboard') }}" class="hover:text-[#318f8c] font-medium">Dashboard</a>
-        </li>
-        <li>/</li>
-        <li>
-          <a href="{{ route('attendances.index') }}" class="hover:text-[#318f8c] font-medium">Attendances</a>
-        </li>
-        @if(request()->routeIs('attendances.balance'))
-          <li>/</li>
-          <li class="text-slate-400">Time Balance</li>
-        @endif
-      </ol> --}}
-
       {{-- Submenu (toggle) --}}
       <div class="flex space-x-2">
         <a href="{{ route('attendances.index') }}"
@@ -33,6 +19,11 @@
           class="px-3 py-1.5 rounded-lg border text-sm font-medium
                   {{ request()->routeIs('attendances.balance') ? 'bg-[#318f8c] text-white border-[#318f8c]' : 'border-slate-200 hover:bg-slate-50' }}">
           Time Balance
+        </a>
+        <a href="{{ route('attendances.lateness') }}"
+          class="px-3 py-1.5 rounded-lg border text-sm font-medium
+                  {{ request()->routeIs('attendances.lateness') ? 'bg-[#318f8c] text-white border-[#318f8c]' : 'border-slate-200 hover:bg-slate-50' }}">
+          Lateness
         </a>
       </div>
     </nav>
@@ -51,12 +42,6 @@
              class="rounded-lg border border-slate-200 px-3 py-2 focus:border-[#318f8c] focus:ring-0">
       <input type="date" name="to" value="{{ $to }}"
              class="rounded-lg border border-slate-200 px-3 py-2 focus:border-[#318f8c] focus:ring-0">
-      {{-- <select name="status" class="rounded-lg border border-slate-200 px-3 py-2 focus:border-[#318f8c] focus:ring-0">
-        <option value="">All status</option>
-        <option value="present" @selected($status==='present')>present</option>
-        <option value="absent"  @selected($status==='absent')>absent</option>
-        <option value="late"    @selected($status==='late')>late</option>
-      </select> --}}
       <button class="!rounded-md bg-[#318f8c] px-4 py-2 text-white font-semibold">Filter</button>
     </form>
 

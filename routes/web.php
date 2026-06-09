@@ -247,6 +247,8 @@ Route::middleware(['auth', 'single.session'])->group(function () {
                 ->where('type', 'check_in|check_out')
                 ->name('attendances.photoUrl');
             Route::post('/admin/attendances/reset', 'resetById')->name('attendances.resetById');
+
+            Route::get('/admin/lateness', 'lateness_index')->name('attendances.lateness');
         });
     });
 
