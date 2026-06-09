@@ -44,9 +44,27 @@
     {{-- FORM UPLOAD --}}
     <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:p-5">
         <form method="POST"
-              action="{{ route('cashier.store') }}"
-              enctype="multipart/form-data"
-              class="space-y-5">
+            action="{{ route('cashier.store') }}"
+            enctype="multipart/form-data"
+            class="space-y-5"
+            x-data="{ submitting: false }"
+            @submit="
+                if (!$el.checkValidity()) {
+                    return;
+                }
+
+                submitting = true;
+
+                Swal.fire({
+                    title: 'Menyimpan dokumen...',
+                    html: 'Foto sedang diupload. Mohon tunggu sebentar.',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+            ">
             @csrf
 
             {{-- Bagian: Info dasar --}}
@@ -142,7 +160,7 @@
             <div class="grid gap-4 md:grid-cols-2">
 
                 {{-- 1. Kertas Tutup Kasir (WAJIB) --}}
-                <div x-data="{ preview: null }"
+                <div x-data="singleUpload()"
                     class="rounded-2xl border border-emerald-200 bg-white/90 p-4 shadow-sm">
                     <div class="mb-2 flex items-start justify-between gap-2">
                         <div>
@@ -164,7 +182,7 @@
                         capture="environment"
                         class="w-full cursor-pointer rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-600 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white hover:file:bg-emerald-700 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
                         required
-                        @change="preview = $event.target.files[0] ? URL.createObjectURL($event.target.files[0]) : null">
+                        @change="onFileChange($event)">
 
                     <p class="mt-2 text-xs text-slate-400">
                         Maks 5MB. Format: JPG, PNG, dll.
@@ -182,10 +200,14 @@
                                 class="h-32 w-full max-w-xs rounded-xl border border-slate-200 object-cover">
                         </div>
                     </template>
+
+                    <template x-if="loading">
+                        <p class="mt-1 text-xs text-emerald-600">Mengompres foto...</p>
+                    </template>
                 </div>
 
                 {{-- 2. Bukti Setoran --}}
-                <div x-data="{ preview: null }"
+                <div x-data="singleUpload()"
                     class="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm">
                     <div class="mb-2 flex items-start justify-between gap-2">
                         <div>
@@ -206,7 +228,7 @@
                         accept="image/*"
                         capture="environment"
                         class="w-full cursor-pointer rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-700 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white hover:file:bg-slate-900 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
-                        @change="preview = $event.target.files[0] ? URL.createObjectURL($event.target.files[0]) : null">
+                        @change="onFileChange($event)">
 
                     @error('deposit_slip_photo')
                         <p class="text-[11px] text-rose-500 mt-1">{{ $message }}</p>
@@ -220,6 +242,10 @@
                                 alt="Preview bukti setoran"
                                 class="h-32 w-full max-w-xs rounded-xl border border-slate-200 object-cover">
                         </div>
+                    </template>
+
+                    <template x-if="loading">
+                        <p class="mt-1 text-xs text-emerald-600">Mengompres foto...</p>
                     </template>
                 </div>
 
@@ -262,6 +288,10 @@
                                         alt="Preview bukti cek darah"
                                         class="h-14 w-14 rounded-lg border border-slate-200 object-cover"
                                     >
+                                </template>
+
+                                <template x-if="field.loading">
+                                    <p class="text-xs text-emerald-600">Mengompres...</p>
                                 </template>
 
                                 <button
@@ -322,6 +352,10 @@
                                     >
                                 </template>
 
+                                <template x-if="field.loading">
+                                    <p class="text-xs text-emerald-600">Mengompres...</p>
+                                </template>
+
                                 <button
                                     type="button"
                                     class="text-sm text-rose-500 hover:text-rose-600"
@@ -338,12 +372,14 @@
                         <p class="text-[11px] text-rose-500 mt-1">{{ $message }}</p>
                     @enderror
                 </div>
+            </div>
 
             {{-- Tombol Submit --}}
             <div class="flex justify-end gap-2 pt-2">
                 <button type="submit"
-                        class="rounded bg-emerald-600 px-5 py-1.5 text-md font-semibold text-white shadow-sm hover:bg-emerald-700">
-                    Simpan Dokumen
+                        :disabled="submitting"
+                        class="inline-flex items-center justify-center gap-2 rounded bg-emerald-600 px-5 py-1.5 text-md font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-70">
+                    <span x-text="submitting ? 'Menyimpan...' : 'Simpan Dokumen'"></span>
                 </button>
             </div>
         </form>

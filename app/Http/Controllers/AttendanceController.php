@@ -16,6 +16,7 @@ use App\Models\Greetings;
 
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class AttendanceController extends Controller
 {
@@ -145,12 +146,10 @@ class AttendanceController extends Controller
             'accuracy_m'    => $request->input('acc'),   // optional
         ]);
 
-        return $event;
-
         if ($request->hasFile('photo')) {
             $file = $request->file('photo');
-            $path = $file->store('Apotek/TUTUP KASIR Bllw1 (File responses)/Foto Kertas Tutup Kasir (File responses)', 'google_closing_cash2');
-            // $path = $file->store('attendance/'.today()->format('Y/m/d'), 'public');
+            // $path = $file->store('Apotek/TUTUP KASIR Bllw1 (File responses)/Foto Kertas Tutup Kasir (File responses)', 'google_closing_cash2');
+            $path = $file->store('attendance/'.today()->format('Y/m/d'), 'public');
 
             AttendancePhotos::create([
                 'id_attendance_event' => $event->id,
@@ -574,6 +573,323 @@ class AttendanceController extends Controller
         });
 
         return response()->json(['message' => 'Reset success.'], 200);
+    }
+
+    public function lateness_index(Request $request)
+    {
+        abort_unless(auth()->user()?->hasRole('superadmin'), 403);
+
+        $month    = $request->input('month', now()->format('Y-m'));
+        $branchId = $request->input('branch_id');
+        $lateType = $request->input('late_type');
+        $search   = trim((string) $request->input('search'));
+
+        $startDate = Carbon::parse($month . '-01')->startOfMonth()->toDateString();
+        $endDate   = Carbon::parse($month . '-01')->endOfMonth()->toDateString();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Main lateness query
+        |--------------------------------------------------------------------------
+        | Used for summary, daily trend, branch summary, and lateness detail rows.
+        | This query only reads actual lateness rows: attendances.is_late = true.
+        */
+        $latenessBaseQuery = Attendances::query()
+            ->join('employees', 'employees.id', '=', 'attendances.id_employee')
+            ->leftJoin('branches', 'branches.id', '=', 'employees.id_branch')
+            ->whereBetween('attendances.work_date', [$startDate, $endDate])
+            ->where('attendances.is_late', true)
+            ->when($branchId, function ($query) use ($branchId) {
+                $query->where('employees.id_branch', $branchId);
+            })
+            ->when($lateType, function ($query) use ($lateType) {
+                $query->where('attendances.late_type', $lateType);
+            })
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('employees.name', 'like', "%{$search}%")
+                    ->orWhere('branches.name', 'like', "%{$search}%");
+                });
+            });
+
+        /*
+        |--------------------------------------------------------------------------
+        | Summary cards
+        |--------------------------------------------------------------------------
+        */
+        $summary = (clone $latenessBaseQuery)
+            ->selectRaw("
+                COUNT(*) as total_late_count,
+                COUNT(DISTINCT attendances.id_employee) as total_late_employees,
+                COALESCE(SUM(attendances.late_minutes), 0) as total_late_minutes,
+                COALESCE(SUM(attendances.penalty_minutes), 0) as total_penalty_minutes,
+                COALESCE(ROUND(AVG(attendances.late_minutes)), 0) as avg_late_minutes,
+                COALESCE(MAX(attendances.late_minutes), 0) as max_late_minutes,
+                COALESCE(SUM(CASE WHEN attendances.late_type = 'with_permission' THEN 1 ELSE 0 END), 0) as with_permission_count,
+                COALESCE(SUM(CASE WHEN attendances.late_type = 'without_permission' THEN 1 ELSE 0 END), 0) as without_permission_count
+            ")
+            ->first();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Daily trend chart
+        |--------------------------------------------------------------------------
+        */
+        $dailyTrend = (clone $latenessBaseQuery)
+            ->selectRaw("
+                DATE(attendances.work_date) as date,
+                COUNT(*) as late_count,
+                COALESCE(SUM(attendances.late_minutes), 0) as late_minutes
+            ")
+            ->groupBy(DB::raw('DATE(attendances.work_date)'))
+            ->orderBy('date')
+            ->get();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Employee lateness base
+        |--------------------------------------------------------------------------
+        | This starts from employees so we can show all employees,
+        | including employees with 0 lateness.
+        */
+        $employeeLateBase = DB::table('employees')
+            ->leftJoin('branches', 'branches.id', '=', 'employees.id_branch')
+            ->leftJoin('attendances', function ($join) use ($startDate, $endDate, $lateType) {
+                $join->on('attendances.id_employee', '=', 'employees.id')
+                    ->whereBetween('attendances.work_date', [$startDate, $endDate])
+                    ->where('attendances.is_late', true);
+
+                if ($lateType) {
+                    $join->where('attendances.late_type', $lateType);
+                }
+            })
+            ->when($branchId, function ($query) use ($branchId) {
+                $query->where('employees.id_branch', $branchId);
+            })
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('employees.name', 'like', "%{$search}%")
+                    ->orWhere('branches.name', 'like', "%{$search}%");
+                });
+            });
+
+        /*
+        |--------------------------------------------------------------------------
+        | Employee summary table - paginated
+        |--------------------------------------------------------------------------
+        */
+        $employeeLateSummary = (clone $employeeLateBase)
+            ->selectRaw("
+                employees.id as employee_id,
+                employees.name as employee_name,
+                branches.name as branch_name,
+
+                COUNT(attendances.id) as total_late_count,
+
+                COALESCE(SUM(CASE WHEN attendances.late_type = 'with_permission' THEN 1 ELSE 0 END), 0) as with_permission_count,
+
+                COALESCE(SUM(CASE WHEN attendances.late_type = 'without_permission' THEN 1 ELSE 0 END), 0) as without_permission_count,
+
+                COALESCE(SUM(attendances.late_minutes), 0) as total_late_minutes,
+
+                COALESCE(SUM(attendances.penalty_minutes), 0) as total_penalty_minutes
+            ")
+            ->groupBy('employees.id', 'employees.name', 'branches.name')
+            ->orderByDesc('total_late_count')
+            ->orderByDesc('without_permission_count')
+            ->orderBy('employees.name')
+            ->paginate(20, ['*'], 'employees_page')
+            ->withQueryString();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Top employee chart - Top 10 only
+        |--------------------------------------------------------------------------
+        */
+        $topEmployeeLateChart = (clone $employeeLateBase)
+            ->selectRaw("
+                employees.id as employee_id,
+                employees.name as employee_name,
+
+                COUNT(attendances.id) as total_late_count,
+
+                COALESCE(SUM(CASE WHEN attendances.late_type = 'with_permission' THEN 1 ELSE 0 END), 0) as with_permission_count,
+
+                COALESCE(SUM(CASE WHEN attendances.late_type = 'without_permission' THEN 1 ELSE 0 END), 0) as without_permission_count
+            ")
+            ->groupBy('employees.id', 'employees.name')
+            ->havingRaw('COUNT(attendances.id) > 0')
+            ->orderByDesc('total_late_count')
+            ->orderByDesc('without_permission_count')
+            ->limit(10)
+            ->get();
+
+        $employeeChartLabels = $topEmployeeLateChart
+            ->pluck('employee_name')
+            ->values();
+
+        $employeeChartWithPermission = $topEmployeeLateChart
+            ->pluck('with_permission_count')
+            ->map(fn ($value) => (int) $value)
+            ->values();
+
+        $employeeChartWithoutPermission = $topEmployeeLateChart
+            ->pluck('without_permission_count')
+            ->map(fn ($value) => (int) $value)
+            ->values();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Branch summary
+        |--------------------------------------------------------------------------
+        */
+        $branchSummary = (clone $latenessBaseQuery)
+            ->selectRaw("
+                COALESCE(branches.name, 'Tanpa Cabang') as branch_name,
+                COUNT(*) as late_count,
+                COALESCE(SUM(attendances.late_minutes), 0) as total_late_minutes
+            ")
+            ->groupBy('branches.name')
+            ->orderByDesc('late_count')
+            ->get();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Lateness detail rows - paginated
+        |--------------------------------------------------------------------------
+        */
+        $latenessRows = (clone $latenessBaseQuery)
+            ->select([
+                'attendances.id',
+                'attendances.work_date',
+                'attendances.check_in_at',
+                'attendances.late_minutes',
+                'attendances.penalty_minutes',
+                'attendances.late_type',
+
+                // Use this if your confirmation panel saves note into minutes_note.
+                'attendances.notes',
+
+                // If your real column is notes, replace the line above with:
+                // 'attendances.notes',
+
+                'employees.name as employee_name',
+                'branches.name as branch_name',
+            ])
+            ->orderByDesc('attendances.work_date')
+            ->paginate(10, ['*'], 'details_page')
+            ->withQueryString();
+
+        $branches = Branches::orderBy('name')->get(['id', 'name']);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Suggestions
+        |--------------------------------------------------------------------------
+        | Use topEmployeeLateChart, not employeeLateSummary paginator.
+        */
+        $suggestions = $this->buildLatenessSuggestions(
+            $summary,
+            $topEmployeeLateChart,
+            $branchSummary
+        );
+
+        return view('attendances.lateness.index', compact(
+            'month',
+            'branchId',
+            'lateType',
+            'search',
+            'summary',
+            'dailyTrend',
+            'employeeLateSummary',
+            'topEmployeeLateChart',
+            'employeeChartLabels',
+            'employeeChartWithPermission',
+            'employeeChartWithoutPermission',
+            'branchSummary',
+            'latenessRows',
+            'branches',
+            'suggestions'
+        ));
+    }
+
+    private function buildLatenessSuggestions($summary, $topEmployees, $branchSummary): array
+    {
+        $suggestions = [];
+
+        $totalLate         = (int) ($summary->total_late_count ?? 0);
+        $withoutPermission = (int) ($summary->without_permission_count ?? 0);
+        $withPermission    = (int) ($summary->with_permission_count ?? 0);
+        $avgLate           = (int) ($summary->avg_late_minutes ?? 0);
+
+        if ($totalLate === 0) {
+            return [
+                [
+                    'type' => 'success',
+                    'title' => 'Kedisiplinan bulan ini baik',
+                    'body' => 'Belum ada data keterlambatan resmi pada periode ini. Pertahankan monitoring rutin.',
+                ],
+            ];
+        }
+
+        if ($withoutPermission > $withPermission) {
+            $suggestions[] = [
+                'type' => 'danger',
+                'title' => 'Telat tanpa izin lebih dominan',
+                'body' => 'Jumlah telat tanpa izin lebih tinggi daripada telat dengan izin. Pertimbangkan briefing kedisiplinan, reminder jam masuk, atau evaluasi shift tertentu.',
+            ];
+        }
+
+        if ($avgLate >= 15) {
+            $suggestions[] = [
+                'type' => 'warning',
+                'title' => 'Rata-rata keterlambatan cukup tinggi',
+                'body' => "Rata-rata keterlambatan sekitar {$avgLate} menit. Ini sudah cukup signifikan untuk memengaruhi operasional shift.",
+            ];
+        }
+
+        $topEmployee = $topEmployees->first();
+
+        if ($topEmployee && (int) $topEmployee->total_late_count >= 3) {
+            $suggestions[] = [
+                'type' => 'warning',
+                'title' => 'Ada karyawan dengan pola telat berulang',
+                'body' => "{$topEmployee->employee_name} tercatat telat {$topEmployee->total_late_count}x bulan ini. Disarankan lakukan coaching personal sebelum masuk ke penalti lebih berat.",
+            ];
+        }
+
+        $topWithoutPermissionEmployee = $topEmployees
+            ->where('without_permission_count', '>', 0)
+            ->sortByDesc('without_permission_count')
+            ->first();
+
+        if ($topWithoutPermissionEmployee && (int) $topWithoutPermissionEmployee->without_permission_count >= 2) {
+            $suggestions[] = [
+                'type' => 'danger',
+                'title' => 'Ada karyawan sering telat tanpa izin',
+                'body' => "{$topWithoutPermissionEmployee->employee_name} tercatat telat tanpa izin {$topWithoutPermissionEmployee->without_permission_count}x bulan ini. Ini perlu diprioritaskan untuk evaluasi kedisiplinan.",
+            ];
+        }
+
+        $topBranch = $branchSummary->first();
+
+        if ($topBranch && (int) $topBranch->late_count >= 5) {
+            $suggestions[] = [
+                'type' => 'info',
+                'title' => 'Perlu evaluasi cabang',
+                'body' => "Cabang {$topBranch->branch_name} memiliki jumlah keterlambatan tertinggi. Cek apakah masalahnya personal, jadwal shift, jarak, atau load kerja cabang.",
+            ];
+        }
+
+        if (empty($suggestions)) {
+            $suggestions[] = [
+                'type' => 'info',
+                'title' => 'Keterlambatan masih terkendali',
+                'body' => 'Data menunjukkan keterlambatan ada, tetapi belum menunjukkan pola risiko besar. Tetap pantau tren mingguan.',
+            ];
+        }
+
+        return $suggestions;
     }
 
 }
