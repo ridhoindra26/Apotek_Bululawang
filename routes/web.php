@@ -367,4 +367,4 @@ Route::middleware(['auth', 'single.session'])->group(function () {
         ->name('health-checks.due');
 
     // Customers (sub)
-    Route::resource('customers', CustomerController::class);
+    Route::view('/privacy-policy', 'privacy-policy')->name('privacy-policy');
