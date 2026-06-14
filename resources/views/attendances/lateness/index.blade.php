@@ -59,9 +59,7 @@
     $totalPenaltyMinutes = (int) ($summary->total_penalty_minutes ?? 0);
 @endphp
 
-<div class="mx-auto w-full max-w-7xl px-4 sm:px-6 space-y-6">
-
-
+<div class="mx-auto container-fluid w-full max-w-7xl px-4 sm:px-6 space-y-6">
     {{-- Header + Filters --}}
     <div class="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
         <nav class="flex items-center justify-between mb-4 text-sm text-slate-600">

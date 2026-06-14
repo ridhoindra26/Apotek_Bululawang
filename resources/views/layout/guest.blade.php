@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="{{ str_replace('_','-',app()->getLocale()) }}" class="h-full">
+<html lang="{{ str_replace('_','-',app()->getLocale()) }}" class="min-h-full">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -12,8 +12,11 @@
     }
   </style>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-white via-[#d8f3f2] to-[#318f8c]/20 flex items-center justify-center">
-  @yield('content')
-  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<body class="min-h-full bg-gradient-to-br from-white via-[#d8f3f2] to-[#318f8c]/20 bg-fixed">
+    <main class="min-h-screen px-4 py-8">
+        @yield('content')
+    </main>
+
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </body>
 </html>
