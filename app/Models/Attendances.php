@@ -28,7 +28,9 @@ class Attendances extends Model
         'early_leave_minutes',
         'early_checkin_minutes',
         'notes',
-        'is_confirmed'
+        'is_confirmed',
+        'is_late',
+        'late_type',
     ];
 
     protected $casts = [
@@ -43,6 +45,7 @@ class Attendances extends Model
         'overtime_minutes'   => 'integer',
         'overtime_applied_minutes' => 'integer',
         'is_confirmed'       => 'boolean',
+        'is_late'           => 'boolean',
     ];
 
     /** Relationships */

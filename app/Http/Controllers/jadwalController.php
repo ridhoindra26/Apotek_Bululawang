@@ -54,7 +54,8 @@ class jadwalController extends Controller
                     'tahun'        => Carbon::parse($r->date)->year,
                     'shift'        => $r->shift,
                     'libur'        => (bool) $r->is_vacation,
-                    'id_role'      => $r->employees->roles?->index
+                    'id_role'      => $r->employees->roles?->index,
+                    'id_shift_time'=> $r->id_shift_time
                 ];
             })->toArray();
 
@@ -66,6 +67,7 @@ class jadwalController extends Controller
 
         // Build calendar view (fungsi sama)
         $calendars = $this->buildCalendars($jadwalFlat);
+        // return response()->json($calendars, 200);
 
         return view('jadwal.index', compact(
             'bulan',
@@ -89,12 +91,19 @@ class jadwalController extends Controller
             // Selalu pakai shift asli (Pagi/Siang), walau libur
             $shift = $row['shift'] ?? 'Pagi';
 
+            if ($shift === 'Pagi') {
+                $shiftTimeId = $row['id_shift_time'] ?? 1;
+            } else {
+                $shiftTimeId = $row['id_shift_time'] ?? 3;
+            }
+
             $cal[$day][$branchKey][$shift][] = [
                 'id' => $row['id'] ?? null,
                 'nama_karyawan' => $row['karyawan'] ?? '-',
                 'libur'         => (bool)($row['libur'] ?? false),
                 'id_karyawan'   => $row['id_karyawan'] ?? null,
-                'id_role'       => $row['id_role'] ?? null
+                'id_role'       => $row['id_role'] ?? null,
+                'id_shift_time' => $shiftTimeId
             ];
         }
         
@@ -403,7 +412,8 @@ class jadwalController extends Controller
                 'tahun'        => (int)$d->year,
                 'shift'        => $r->shift,                // 'Pagi' / 'Siang'
                 'libur'        => (bool)$r->is_vacation,
-                'id_role'      => $r->employees->roles?->index
+                'id_role'      => $r->employees->roles?->index,
+                'id_shift_time' => $r->id_shift_time
             ];
         })->toArray();
 
@@ -430,25 +440,36 @@ class jadwalController extends Controller
         }
 
         // Get all rows on that date
-        $rows = Schedules::with(['branches:id,name','employees:id,name,id_role', 'employees.roles:id,index', 'shiftTime:id,group,code,start_time,end_time'])
-            ->whereDate('date', $date)
-            ->orderBy('id_branch')
-            ->orderByRaw("CASE WHEN shift = 'Pagi' THEN 0 ELSE 1 END")
-            ->get()
-            ->map(function($r){
-                return [
-                    'id'          => $r->id,
-                    'id_branch'   => $r->id_branch,
-                    'branch_name' => $r->branches->name ?? ('Cabang '.$r->branch_id),
-                    'id_employee' => $r->id_employee,
-                    'employee'    => $r->employees->name ?? '-',
-                    'shift'       => $r->shift,       // Pagi/Siang
-                    'id_shift_time'  => $r->id_shift_time,
-                    'shift_time_code' => $r->shiftTime?->code,
-                    'is_vacation'    => (bool)$r->is_vacation,
-                    'role_index'     => $r->employees->roles?->index
-                ];
-            })->values();
+        $rows = Schedules::query()
+                ->select('schedules.*')
+                ->join('employees', 'employees.id', '=', 'schedules.id_employee')
+                ->with([
+                    'branches:id,name',
+                    'employees:id,name,id_role',
+                    'employees.roles:id,index',
+                    'shiftTime:id,group,code,start_time,end_time',
+                ])
+                ->whereDate('schedules.date', $date)
+                // ->orderBy('schedules.id_branch')
+                ->orderBy('employees.id_role') 
+                ->orderByRaw("CASE WHEN schedules.shift = 'Pagi' THEN 0 ELSE 1 END")
+                ->get()
+                ->map(function ($r) {
+                    return [
+                        'id'              => $r->id,
+                        'id_branch'       => $r->id_branch,
+                        'branch_name'     => $r->branches->name ?? ('Cabang '.$r->branch_id),
+                        'id_employee'     => $r->id_employee,
+                        'employee'        => $r->employees->name ?? '-',
+                        'shift'           => $r->shift,
+                        'id_shift_time'   => $r->id_shift_time,
+                        'shift_time_code' => $r->shiftTime?->code,
+                        'is_vacation'     => (bool) $r->is_vacation,
+                        'role_index'      => $r->employees->roles?->index,
+                    ];
+                })
+                ->values();
+
 
         // Employee choices grouped per branch (for selects)
         $branches = Branches::with(['employees' => function ($q) {

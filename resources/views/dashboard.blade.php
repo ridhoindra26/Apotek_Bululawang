@@ -20,6 +20,27 @@
   // Simple helpers for badge styling
   $balanceBox = $isPositive ? 'bg-emerald-50 border-emerald-200' : ($isNegative ? 'bg-rose-50 border-rose-200' : 'bg-slate-50 border-slate-200');
   $balanceText = $isPositive ? 'text-emerald-700' : ($isNegative ? 'text-rose-700' : 'text-slate-500');
+
+    $formatLateMinutes = function ($totalMinutes) {
+    $totalMinutes = (int) $totalMinutes;
+
+    if ($totalMinutes <= 0) {
+      return '0 menit';
+    }
+
+    $h = intdiv($totalMinutes, 60);
+    $m = $totalMinutes % 60;
+
+    if ($h > 0 && $m > 0) {
+      return "{$h} jam {$m} menit";
+    }
+
+    if ($h > 0) {
+      return "{$h} jam";
+    }
+
+    return "{$m} menit";
+  };
 @endphp
 
 <div class="mx-auto w-full max-w-4xl px-4 sm:px-6">
@@ -106,7 +127,7 @@
                             </button> --}}
                             <button 
                                 type="button"
-                                class="px-3 py-1.5 text-xs rounded-lg bg-[#318f8c] text-white hover:bg-emerald-700 disabled:opacity-40"
+                                class="px-3 py-1.5 text-xs rounded-lg bg-[#318f8c] text-white hover:bg-[#318f8c]-700 disabled:opacity-40"
                                 @click="next()"
                                 :disabled="currentIndex === announcements.length - 1"
                                 x-show="announcements.length > 1"
@@ -174,7 +195,7 @@
             </p>
           </div>
           <div class="rounded-xl border border-slate-200 p-3 text-center bg-slate-50">
-            <p class="text-xs text-slate-500">Work Duration</p>
+            <p class="text-xs text-slate-500">Durasi Kerja</p>
             <p class="font-semibold text-slate-800">
               {{ $attendanceToday?->work_minutes ? sprintf('%02d:%02d', floor($attendanceToday->work_minutes / 60), $attendanceToday->work_minutes % 60) : '—' }}
             </p>
@@ -194,7 +215,7 @@
         data-ledger-trigger
         data-ledger-endpoint="{{ route('user.balance.show') }}"
         >
-        <p class="text-xs text-slate-500">Time Balance</p>
+        <p class="text-xs text-slate-500">Saldo jam<br>(klik untuk lihat riwayat)</p>
         <p class="font-semibold mb-0 {{ $balanceText }}">
           @if ($isPositive)
           +{{ sprintf('%02d:%02d', $hours, $minutes) }} <span class="text-xs font-normal">(Lembur)</span>
@@ -205,6 +226,71 @@
           @endif
         </p>
       </button>
+          {{-- Monthly Late Summary --}}
+      <div class="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <p class="text-xs text-slate-500">Telat Bulan Ini</p>
+            <p class="text-sm font-semibold text-slate-800">
+              {{ now()->locale('id_ID')->translatedFormat('F Y') }}
+            </p>
+          </div>
+
+          @if (($lateSummary->late_count ?? 0) > 0)
+            <span class="inline-flex items-center rounded-full bg-rose-100 px-2.5 py-1 text-[11px] font-semibold text-rose-700">
+              {{ $lateSummary->late_count }}x telat
+            </span>
+          @else
+            <span class="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
+              Selalu Tepat waktu😎
+            </span>
+          @endif
+        </div>
+
+        <div class="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-center">
+            <p class="text-xs text-slate-500">Dengan izin</p>
+            <p class="text-sm font-bold text-slate-800">
+              {{ $lateSummary->late_with_permission_count ?? 0 }}x
+            </p>
+          </div>
+
+          <div class="rounded-lg border border-rose-100 bg-white px-3 py-2 text-center">
+            <p class="text-xs text-slate-500">Tanpa Izin</p>
+            <p class="text-sm font-bold text-slate-700">
+              {{ $lateSummary->late_without_permission_count ?? 0 }}x
+            </p>
+          </div>
+        </div>
+
+        @if (isset($lateDetails) && $lateDetails->isNotEmpty())
+          <div class="mt-3 border-t border-slate-200 pt-3">
+            <p class="mb-2 text-xs font-semibold text-slate-600">
+              Riwayat Telat Terbaru
+            </p>
+
+            <div class="space-y-2">
+              @foreach ($lateDetails as $late)
+                <div class="flex items-center justify-between rounded-lg bg-white px-3 py-2 border border-slate-200">
+                  <div>
+                    <p class="text-xs font-semibold text-slate-700">
+                      {{ \Carbon\Carbon::parse($late->work_date ?? $late->date)->locale('id_ID')->translatedFormat('d M Y') }}
+                    </p>
+                    <p class="text-[11px] text-slate-500">
+                      Check-In:
+                      {{ $late->check_in_at ? \Carbon\Carbon::parse($late->check_in_at)->format('H:i') : '—' }}
+                    </p>
+                    <p class="text-xs font-bold text-rose-700">
+                      +{{ $formatLateMinutes($late->penalty_minutes ?? 0) }}
+                    </p>
+                  </div>
+
+                </div>
+              @endforeach
+            </div>
+          </div>
+        @endif
+      </div>
     </div>
 
     {{-- ACTION BUTTONS --}}
@@ -255,12 +341,19 @@
             <tr class="border-b hover:bg-slate-50">
               <td class="py-2 pr-4">{{ $a->work_date->format('Y-m-d') }}</td>
               <td class="py-2 pr-4">
-                <button type="button"
-                        class="text-[#318f8c] hover:underline js-photo-fetch"
-                        data-url="{{ route('attendance.photo', ['type' => 'check_in', 'id' => $a->id]) }}"
-                        data-caption="Check-In — {{ $a->work_date->format('Y-m-d') }} {{ $a->check_in_at->format('H:i') }}">
-                  {{ $a->check_in_at->format('H:i') }}
-                </button>
+                @php
+                  $inTime = $a->check_in_at?->format('H:i');
+                @endphp
+                @if ($inTime)
+                  <button type="button"
+                          class="text-[#318f8c] hover:underline js-photo-fetch"
+                          data-url="{{ route('attendance.photo', ['type' => 'check_in', 'id' => $a->id]) }}"
+                          data-caption="Check-In — {{ $a->work_date->format('Y-m-d') }} {{ $a->check_in_at->format('H:i') }}">
+                    {{ $inTime }}
+                  </button>
+                @else
+                    {{ $inTime ?? '—' }}
+                @endif
             </td>
 
             <td class="py-2 pr-4">

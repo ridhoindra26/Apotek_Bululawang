@@ -19,5 +19,10 @@ import './cabang.index';
 import './pasangan.index';
 import './timeLedger'
 import './ledger-modal'
+import './cashier-documents-list'
+import './cashier-multi-upload'
+
+import './shortener/index';
+import './shortener/show';
 
 import 'sweetalert2/dist/sweetalert2.min.css';

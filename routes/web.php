@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\jadwalController;
@@ -14,10 +15,40 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\TimeBalanceController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\GreetingController;
+use App\Http\Controllers\CashierDocumentsController;
+use App\Http\Controllers\PayrollPeriodController;
+use App\Http\Controllers\PayrollTransferTemplateController;
+use App\Http\Controllers\PayrollEmployeeController;
+use App\Http\Controllers\PayrollUserController;
+use App\Http\Controllers\HealthCheckController;
+use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\ShortUrlController;
 
 Route::get('/', function () {
     return redirect()->route('auth.index');
 })->name('login');
+
+// Route::get('/test', function () {
+//     try {
+//         $diskName = 'google_closing_cash2'; // ganti2 kalau mau tes disk lain
+//         $filename = 'test_' . now()->format('Ymd_His') . '.txt';
+
+//         Storage::disk($diskName)->put($filename, 'Halo dari /test-drive');
+
+//         return [
+//             'status'   => 'ok',
+//             'disk'     => $diskName,
+//             'filename' => $filename,
+//         ];
+//     } catch (\Throwable $e) {
+//         // debug kalau error
+//         return response()->json([
+//             'status'  => 'error',
+//             'message' => $e->getMessage(),
+//             'trace'   => str($e->getTraceAsString())->limit(500),
+//         ], 500);
+//     }
+// });
 
 Route::controller(AuthController::class)->group(function () {
     Route::get('/login', 'index')->middleware('guest')->name('auth.index');
@@ -63,6 +94,38 @@ Route::middleware(['auth', 'single.session'])->group(function () {
             Route::get('/jadwal/day', 'dayShow')->name('jadwal.day.show');
             Route::patch('/jadwal/day', 'dayUpdate')->name('jadwal.day.update');
             Route::delete('/jadwal/day', 'destroy')->name('jadwal.destroy');
+        });
+
+    /**
+     * Cashier Documents — user, admin, superadmin
+     */
+    Route::controller(CashierDocumentsController::class)
+        ->middleware('role:user,admin,superadmin')
+        ->group(function () {
+            Route::get('/cashier', 'index')->name('cashier.index');
+            Route::get('/cashier/list', 'list')->name('cashier.list');
+            Route::post('/cashier', 'store')->name('cashier.store');
+            Route::get('/cashier/{id}', 'show')->name('cashier.show');
+            Route::get('/cashier/{id}/edit', 'edit')->name('cashier.edit');
+            Route::post('/cashier/{cashierDocuments}', 'update')->name('cashier.update');
+        });
+
+    /**
+     * Cashier Documents — admin, superadmin
+     */
+    Route::controller(CashierDocumentsController::class)
+        ->middleware('role:admin,superadmin')
+        ->group(function () {
+            Route::post('/cashier/{cashierDocuments}/confirm', 'confirm')->name('cashier.confirm');
+        });
+
+    /**
+     * Cashier Documents — superadmin
+     */
+    Route::controller(CashierDocumentsController::class)
+        ->middleware('role:superadmin')
+        ->group(function () {
+            Route::delete('/cashier/{cashierDocuments}', 'destroy')->name('cashier.destroy');
         });
 
     /**
@@ -142,6 +205,15 @@ Route::middleware(['auth', 'single.session'])->group(function () {
             Route::delete('/greetings/{greeting}', 'destroyGreeting')->name('greetings.destroy');
         });
 
+        Route::controller(ShortUrlController::class)->group(function () {
+            Route::get('/shortener', 'index')->name('shortener.index');
+            Route::get('/shortener/create', 'create')->name('shortener.create');
+            Route::post('/shortener', 'store')->name('shortener.store');
+            Route::get('/shortener/{shortUrl}', 'show')->name('shortener.show');
+            Route::get('/shortener/{shortUrl}/edit', 'edit')->name('shortener.edit');
+            Route::put('/shortener/{shortUrl}', 'update')->name('shortener.update');
+            Route::delete('/shortener/{shortUrl}', 'destroy')->name('shortener.destroy');
+        });
 
     });
 
@@ -174,6 +246,9 @@ Route::middleware(['auth', 'single.session'])->group(function () {
             Route::get('/admin/attendances/{attendance}/{type}/photo', 'photoUrl')
                 ->where('type', 'check_in|check_out')
                 ->name('attendances.photoUrl');
+            Route::post('/admin/attendances/reset', 'resetById')->name('attendances.resetById');
+
+            Route::get('/admin/lateness', 'lateness_index')->name('attendances.lateness');
         });
     });
 
@@ -197,4 +272,99 @@ Route::middleware(['auth', 'single.session'])->group(function () {
         });
     });
 
+    Route::controller(PayrollPeriodController::class)->group(function () {
+        Route::middleware(['role:superadmin'])->group(function () {
+            // Periods
+            Route::get('/payroll/periods', 'index')->name('payroll.periods.index');
+            Route::post('/payroll/periods', 'store')->name('payroll.periods.store');
+            Route::get('/payroll/periods/{id}', 'show')->name('payroll.periods.show');
+
+            // Period actions
+            Route::post('/payroll/periods/{id}/generate-items', 'generateItems')->name('payroll.periods.generate-items');
+            Route::post('/payroll/periods/{id}/lock', 'lock')->name('payroll.periods.lock');
+
+            // Export (CSV download)
+            Route::post('/payroll/periods/{id}/export-csv', 'exportCsv')->name('payroll.periods.export-csv');
+
+            // Line items (allowance/deduction)
+            Route::post('/payroll/item-lines', 'storeLine')->name('payroll.item-lines.store');
+            Route::put('/payroll/item-lines/{id}', 'updateLine')->name('payroll.item-lines.update');
+            Route::delete('/payroll/item-lines/{id}', 'destroyLine')->name('payroll.item-lines.destroy');
+
+            Route::post('/payroll/periods/{id}/mark-paid', 'markPaid')->name('payroll.periods.mark-paid');
+            Route::get('/payroll/items/{id}/share-whatsapp', 'shareWhatsapp')->name('payroll.items.share-whatsapp');
+
+            Route::get('/payroll/items/{id}/invoice', 'invoice')->name('payroll.items.invoice');
+            Route::get('/payroll/items/{id}/send-invoice-whatsapp', 'sendInvoiceWhatsapp')->name('payroll.items.send-invoice-whatsapp');
+        });
+    });
+
+    Route::controller(PayrollTransferTemplateController::class)->group(function () {
+        Route::middleware(['role:superadmin'])->group(function () {
+
+            Route::get('/payroll/templates', 'index')->name('payroll.templates.index');
+            Route::post('/payroll/templates', 'store')->name('payroll.templates.store');
+            Route::put('/payroll/templates/{id}', 'update')->name('payroll.templates.update');
+            Route::delete('/payroll/templates/{id}', 'destroy')->name('payroll.templates.destroy');
+
+        });
+    });
+
+    Route::controller(PayrollEmployeeController::class)->group(function () {
+        Route::middleware(['role:superadmin'])->group(function () {
+
+            Route::get('/payroll/employees', 'index')->name('payroll.employees.index');
+            Route::put('/payroll/employees/{id}', 'update')->name('payroll.employees.update');
+
+        });
+    });
+
+    Route::controller(PayrollUserController::class)->group(function () {
+        Route::middleware(['role:admin,user'])->group(function () {
+
+            // My Payroll
+            Route::get('/my-payroll', 'index')->name('payroll.user.index');
+            Route::get('/my-payroll/{periodId}', 'show')->name('payroll.user.show');
+
+            // Slip (requires login; employee can only see their own)
+            Route::get('/my-payroll/{periodId}/slip', 'slip')->name('payroll.user.slip');
+        });
+    });
+
+    // Route::controller(HealthCheckController::class)->group(function () {
+    //     Route::middleware(['role:superadmin'])->group(function () {
+    //         Route::delete('customers/{customer}/health-checks/{healthCheck}','destroy')->name('customers.health-checks.destroy');
+    //     });
+    // });
+
+    Route::get('/profile', [karyawanController::class, 'profile'])->name('profile.index');
+    Route::get('/profile/password', [karyawanController::class, 'editPassword'])->name('profile.password.edit');
+    Route::put('/profile/password', [karyawanController::class, 'updatePassword'])->name('profile.password.update');
 });
+
+// Route::controller(HealthCheckController::class)->group(function () {
+//     Route::post('customers/{customer}/health-checks', 'store')->name('customers.health-checks.store');
+//     Route::patch('customers/{customer}/health-checks/{healthCheck}/reminded','markReminded')->name('customers.health-checks.reminded');
+// });
+
+// Route::resource('customers', CustomerController::class);
+
+    Route::resource('health-checks', HealthCheckController::class)->except(['show']);
+
+    Route::get('health-checks', [HealthCheckController::class, 'index'])->name('health-checks.index');
+    Route::post('health-checks', [HealthCheckController::class, 'store'])->name('health-checks.store');
+
+    // POS helpers (JSON)
+    Route::get('health-checks/customers/search', [CustomerController::class, 'search'])->name('customers.search');
+    Route::post('health-checks/customers/quick-store', [CustomerController::class, 'quickStore'])->name('customers.quickStore');
+    
+    // Mark reminded from anywhere
+    Route::patch('health-checks/{health_check}/reminded', [HealthCheckController::class, 'markReminded'])
+        ->name('health-checks.reminded');
+
+    // Due list
+    Route::get('health-checks/due', [HealthCheckController::class, 'due'])
+        ->name('health-checks.due');
+
+    // Customers (sub)
+    Route::view('/privacy-policy', 'privacy-policy')->name('privacy-policy');

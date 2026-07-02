@@ -8,19 +8,6 @@
 
     {{-- BREADCRUMB + SUBMENU --}}
     <nav class="flex items-center justify-between mb-4 text-sm text-slate-600">
-      {{-- <ol class="flex items-center space-x-2">
-        <li>
-          <a href="{{ route('dashboard') }}" class="hover:text-[#318f8c] font-medium">Dashboard</a>
-        </li>
-        <li>/</li>
-        <li>
-          <a href="{{ route('attendances.index') }}" class="hover:text-[#318f8c] font-medium">Attendances</a>
-        </li>
-        @if(request()->routeIs('attendances.balance'))
-          <li>/</li>
-          <li class="text-slate-400">Time Balance</li>
-        @endif
-      </ol> --}}
 
       {{-- Submenu (toggle) --}}
       <div class="flex space-x-2">
@@ -33,6 +20,11 @@
           class="px-3 py-1.5 rounded-lg border text-sm font-medium
                   {{ request()->routeIs('attendances.balance') ? 'bg-[#318f8c] text-white border-[#318f8c]' : 'border-slate-200 hover:bg-slate-50' }}">
           Time Balance
+        </a>
+        <a href="{{ route('attendances.lateness') }}"
+          class="px-3 py-1.5 rounded-lg border text-sm font-medium
+                  {{ request()->routeIs('attendances.lateness') ? 'bg-[#318f8c] text-white border-[#318f8c]' : 'border-slate-200 hover:bg-slate-50' }}">
+          Lateness
         </a>
       </div>
     </nav>

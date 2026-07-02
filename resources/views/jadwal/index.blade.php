@@ -210,6 +210,7 @@
                                                     @foreach ($employees as $employee)
                                                         @php
                                                             $empName = $employee['nama_karyawan'] ?? $employee['karyawan'] ?? '—';
+                                                            $shiftTime = $employee['id_shift_time'] ?? 0;
                                                             $isLibur = (bool)($employee['libur'] ?? false);
                                                             $dotClass = $shift === 'Pagi' ? 'bg-[#ffc107]' : 'bg-[#3498db]';
                                                             if ($isLibur) $dotClass = 'bg-red-500';
@@ -219,6 +220,9 @@
                                                             <span class="{{ $isLibur ? 'text-red-600' : '' }} truncate">
                                                                 {{ $empName }} - {{ $employee['id_role'] ?? '' }}
                                                             </span>
+                                                            @if ($shiftTime === 5)
+                                                                <span class="text-[10px] sm:text-xs text-gray-500">(Middle)</span>
+                                                            @endif
                                                         </li>
                                                     @endforeach
                                                 </ul>

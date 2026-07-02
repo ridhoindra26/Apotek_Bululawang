@@ -8,6 +8,8 @@ use App\Models\Attendances;
 use App\Models\TimeBalances;
 use App\Models\Schedules;
 use App\Models\Announcement;
+use App\Models\Employees;
+use App\Models\User;
 
 
 class dashboardController extends Controller
@@ -18,6 +20,11 @@ class dashboardController extends Controller
     public function index()
     {
         $user  = Auth::user();
+
+        if ($user && $user->hasRole('superadmin')) {
+            return $this->superadmin();
+        }
+
         $today = today()->toDateString(); // sama dengan now()->toDateString()
 
         // Default values
@@ -59,6 +66,34 @@ class dashboardController extends Controller
             })
             ->orderByDesc('date_from')
             ->get();
+
+            // Late Summary
+            $startDate = now()->startOfMonth()->toDateString();
+            $endDate   = now()->endOfMonth()->toDateString();
+
+            $lateSummary = Attendances::where('id_employee', $employeeId)
+                ->whereBetween('work_date', [$startDate, $endDate])
+                ->where('is_late', true)
+                ->selectRaw("
+                    COUNT(*) as late_count,
+                    SUM(CASE WHEN late_type = 'with_permission' THEN 1 ELSE 0 END) as late_with_permission_count,
+                    SUM(CASE WHEN late_type = 'without_permission' THEN 1 ELSE 0 END) as late_without_permission_count
+                ")
+                ->first();
+
+            $lateDetails = Attendances::where('id_employee', $employeeId)
+                ->whereBetween('work_date', [$startDate, $endDate])
+                ->where('is_late', true)
+                ->select([
+                    'id',
+                    'work_date',
+                    'check_in_at',
+                    'penalty_minutes',
+                    'is_late',
+                ])
+                ->orderByDesc('work_date')
+                ->take(3)
+                ->get();
         }
 
         return view('dashboard', compact(
@@ -66,7 +101,84 @@ class dashboardController extends Controller
             'recentAttendances',
             'balance_minutes',
             'todayIsVacation',
-            'announcements'
+            'announcements',
+            'lateSummary',
+            'lateDetails'
+        ));
+    }
+
+    /**
+     * Show the form for creating a new resource for superadmin.
+     */
+    public function superadmin()
+    {
+        $closestBirthdayEmployees = Employees::orderByClosestBirthday()->limit(5)->get();
+
+        $today = now()->toDateString();
+        $soonDate = now()->addDays(90)->toDateString();
+
+        $totalMedicines = 10;
+        $lowStockCount = 5;
+        $expiringSoonCount = 2;
+
+        $todaySales = 3;
+        $todayTransactionCount = 1;
+
+        $attendanceTodayCount = Attendances::whereDate('created_at', $today)->count();
+        $employeeCount = Employees::count();
+
+        $activeSupplierCount = 13;
+        $userCount = User::count();
+
+        $cashInToday = 56;
+
+        $recentSales = [
+            'total' => 48,
+            'created_at' => now()->toDateTimeString(),
+        ];
+
+        $criticalMedicines = [
+            [
+                'name' => 'Paracetamol',
+                'stock' => 10,
+                'minimum_stock' => 20,
+            ],
+            [
+                'name' => 'Ibuprofen',
+                'stock' => 15,
+                'minimum_stock' => 30,
+            ],
+            [
+                'name' => 'Metformin',
+                'stock' => 12,
+                'minimum_stock' => 25,
+            ],
+            [
+                'name' => 'Amlodipin',
+                'stock' => 8,
+                'minimum_stock' => 18,
+            ],
+            [
+                'name' => 'Captopril',
+                'stock' => 5,
+                'minimum_stock' => 15,
+            ],
+        ];
+
+        return view('dashboard.superadmin', compact(
+            'totalMedicines',
+            'lowStockCount',
+            'expiringSoonCount',
+            'todaySales',
+            'todayTransactionCount',
+            'attendanceTodayCount',
+            'employeeCount',
+            'activeSupplierCount',
+            'userCount',
+            'cashInToday',
+            'recentSales',
+            'criticalMedicines',
+            'closestBirthdayEmployees'
         ));
     }
 
