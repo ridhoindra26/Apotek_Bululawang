@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\Request;
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\jadwalController;
@@ -49,6 +50,14 @@ Route::get('/', function () {
 //         ], 500);
 //     }
 // });
+
+Route::get('/csrf-token', function (Request $request) {
+    $request->session()->regenerateToken();
+
+    return response()->json([
+        'token' => csrf_token(),
+    ]);
+})->name('csrf.token');
 
 Route::controller(AuthController::class)->group(function () {
     Route::get('/login', 'index')->middleware('guest')->name('auth.index');
