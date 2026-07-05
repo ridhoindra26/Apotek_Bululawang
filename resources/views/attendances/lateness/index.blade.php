@@ -79,6 +79,11 @@
                         {{ request()->routeIs('attendances.lateness') ? 'bg-[#318f8c] text-white border-[#318f8c]' : 'border-slate-200 hover:bg-slate-50' }}">
                 Lateness
                 </a>
+                <a href="{{ route('attendances.vacations') }}"
+                class="px-3 py-1.5 rounded-lg border text-sm font-medium
+                        {{ request()->routeIs('attendances.vacations') ? 'bg-[#318f8c] text-white border-[#318f8c]' : 'border-slate-200 hover:bg-slate-50' }}">
+                On Leave
+                </a>
             </div>
         </nav>
         <div class="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
@@ -142,7 +147,7 @@
                 <div class="mt-2 grid grid-cols-2 gap-2">
                     <button
                         type="submit"
-                        class="rounded-lg bg-[#318f8c] px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+                        class="!rounded-md bg-[#318f8c] px-4 py-2 text-white font-semibold"
                     >
                         Apply Filter
                     </button>

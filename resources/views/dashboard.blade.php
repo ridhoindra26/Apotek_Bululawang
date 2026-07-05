@@ -12,10 +12,10 @@
     default => 'Selamat Malammm',
   };
 
-  $isPositive = $balance_minutes > 0;
-  $isNegative = $balance_minutes < 0;
-  $hours = floor(abs($balance_minutes) / 60);
-  $minutes = abs($balance_minutes) % 60;
+  $isPositive = $balanceMinutes > 0;
+  $isNegative = $balanceMinutes < 0;
+  $hours = floor(abs($balanceMinutes) / 60);
+  $minutes = abs($balanceMinutes) % 60;
 
   // Simple helpers for badge styling
   $balanceBox = $isPositive ? 'bg-emerald-50 border-emerald-200' : ($isNegative ? 'bg-rose-50 border-rose-200' : 'bg-slate-50 border-slate-200');
@@ -291,6 +291,43 @@
           </div>
         @endif
       </div>
+      {{-- Cuti & Tidak Masuk Summary --}}
+      {{-- <div class="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <div class="flex items-start justify-between gap-3">
+              <div>
+                  <p class="text-xs text-slate-500">Cuti dan Tidak Masuk</p>
+                  <p class="text-sm font-semibold text-slate-800">
+                      Tahun {{ now()->year }}
+                  </p>
+              </div>
+
+              @if (($vacationSummary->total_count ?? 0) > 0)
+                  <span class="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold text-amber-700">
+                      {{ $vacationSummary->total_count }} Data
+                  </span>
+              @else
+                  <span class="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
+                      Belum Ada Data
+                  </span>
+              @endif
+          </div>
+
+          <div class="mt-3 grid grid-cols-2 gap-2">
+              <div class="rounded-lg border border-blue-100 bg-white px-3 py-2 text-center">
+                  <p class="text-xs text-slate-500">Cuti</p>
+                  <p class="text-sm font-bold text-blue-700">
+                      {{ $vacationSummary->cuti_count ?? 0 }}x
+                  </p>
+              </div>
+
+              <div class="rounded-lg border border-rose-100 bg-white px-3 py-2 text-center">
+                  <p class="text-xs text-slate-500">Tidak Masuk</p>
+                  <p class="text-sm font-bold text-rose-700">
+                      {{ $vacationSummary->absent_count ?? 0 }}x
+                  </p>
+              </div>
+          </div>
+      </div> --}}
     </div>
 
     {{-- ACTION BUTTONS --}}

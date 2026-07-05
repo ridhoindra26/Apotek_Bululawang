@@ -26,6 +26,11 @@
                   {{ request()->routeIs('attendances.lateness') ? 'bg-[#318f8c] text-white border-[#318f8c]' : 'border-slate-200 hover:bg-slate-50' }}">
           Lateness
         </a>
+        <a href="{{ route('attendances.vacations') }}"
+          class="px-3 py-1.5 rounded-lg border text-sm font-medium
+                  {{ request()->routeIs('attendances.vacations') ? 'bg-[#318f8c] text-white border-[#318f8c]' : 'border-slate-200 hover:bg-slate-50' }}">
+          On Leave
+        </a>
       </div>
     </nav>
 
