@@ -13,6 +13,8 @@ use App\Models\TimeBalances;
 use App\Models\TimeLedgers;
 use App\Models\Branches;
 use App\Models\Greetings;
+use App\Models\Employees;
+use App\Models\Vacations;
 
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
@@ -810,6 +812,64 @@ class AttendanceController extends Controller
             'latenessRows',
             'branches',
             'suggestions'
+        ));
+    }
+
+    public function vacation_index(Request $request)
+    {
+        $year = (int) $request->input('year', now()->year);
+        $cutiAllowance = now()->month;
+
+        $employees = Employees::query()
+            ->select([
+                'employees.id',
+                'employees.name',
+                'employees.id_branch',
+            ])
+            ->with('branches:id,name')
+            ->withCount([
+                'vacations as cuti_count' => function ($query) use ($year) {
+                    $query->whereYear('date_of_vacation', $year)
+                        ->where('type', 'cuti');
+                },
+                'vacations as absent_count' => function ($query) use ($year) {
+                    $query->whereYear('date_of_vacation', $year)
+                        ->where('type', 'absent');
+                },
+            ])
+            ->with([
+                'vacations' => function ($query) use ($year) {
+                    $query->whereYear('date_of_vacation', $year)
+                        ->whereIn('type', ['cuti', 'absent'])
+                        ->latest('date_of_vacation')
+                        ->select([
+                            'id',
+                            'id_employee',
+                            'date_of_vacation',
+                            'type',
+                            'description',
+                        ]);
+                },
+            ])
+            ->orderByDesc('absent_count')
+            ->orderByDesc('cuti_count')
+            ->orderBy('name')
+            ->paginate(15)
+            ->withQueryString();
+
+        $employees->getCollection()->transform(function ($employee) {
+            $employee->total_absence_count =
+                (int) $employee->cuti_count + (int) $employee->absent_count;
+
+            $employee->latest_vacation = $employee->vacations->first();
+
+            return $employee;
+        });
+
+        return view('attendances.vacations.index', compact(
+            'employees',
+            'year',
+            'cutiAllowance'
         ));
     }
 

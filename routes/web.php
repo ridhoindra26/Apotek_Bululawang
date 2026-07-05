@@ -258,6 +258,8 @@ Route::middleware(['auth', 'single.session'])->group(function () {
             Route::post('/admin/attendances/reset', 'resetById')->name('attendances.resetById');
 
             Route::get('/admin/lateness', 'lateness_index')->name('attendances.lateness');
+
+            Route::get('/admin/vacations', 'vacation_index')->name('attendances.vacations');
         });
     });
 

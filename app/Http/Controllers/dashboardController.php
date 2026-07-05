@@ -10,6 +10,7 @@ use App\Models\Schedules;
 use App\Models\Announcement;
 use App\Models\Employees;
 use App\Models\User;
+use App\Models\Vacations;
 
 
 class dashboardController extends Controller
@@ -19,91 +20,168 @@ class dashboardController extends Controller
      */
     public function index()
     {
-        $user  = Auth::user();
+        $user = Auth::user();
 
-        if ($user && $user->hasRole('superadmin')) {
+        if ($user?->hasRole('superadmin')) {
             return $this->superadmin();
         }
 
-        $today = today()->toDateString(); // sama dengan now()->toDateString()
+        $today = today()->toDateString();
 
-        // Default values
+        /*
+        |--------------------------------------------------------------------------
+        | Default dashboard values
+        |--------------------------------------------------------------------------
+        */
         $todayIsVacation   = false;
         $attendanceToday   = null;
         $recentAttendances = collect();
-        $balance_minutes   = 0;
+        $balanceMinutes    = 0;
         $announcements     = collect();
 
-        if ($user && $user->id_employee) {
+        $lateSummary = (object) [
+            'late_count' => 0,
+            'late_with_permission_count' => 0,
+            'late_without_permission_count' => 0,
+        ];
 
-            $employeeId = $user->id_employee;
+        $lateDetails = collect();
 
-            // Cek libur hari ini
-            $todayIsVacation = Schedules::where('id_employee', $employeeId)
-                ->whereDate('date', $today)
-                ->where('is_vacation', 1)
-                ->exists();
+        $vacationSummary = (object) [
+            'total_count' => 0,
+            'cuti_count' => 0,
+            'absent_count' => 0,
+        ];
 
-            // Absensi hari ini
-            $attendanceToday = Attendances::where('id_employee', $employeeId)
-                ->whereDate('work_date', $today)
-                ->first();
+        $vacationDetails = collect();
 
-            // 7 absensi terakhir
-            $recentAttendances = Attendances::where('id_employee', $employeeId)
-                ->orderByDesc('work_date')
-                ->take(7)
-                ->get();
+        /*
+        |--------------------------------------------------------------------------
+        | Employee dashboard data
+        |--------------------------------------------------------------------------
+        */
+        if (!$user?->id_employee) {
+            return view('dashboard', compact(
+                'attendanceToday',
+                'recentAttendances',
+                'balanceMinutes',
+                'todayIsVacation',
+                'announcements',
+                'lateSummary',
+                'lateDetails',
+                'vacationSummary',
+                'vacationDetails'
+            ));
+        }
 
-            // Time balance (pakai accessor kalau ada)
-            $timeBalance = TimeBalances::where('id_employee', $employeeId)->first();
-            $balance_minutes = $timeBalance?->net_minutes ?? 0;  // daripada getNetMinutesAttribute()
+        $employeeId = $user->id_employee;
 
-            $announcements = Announcement::active()   // scopeActive dari model
-            ->whereHas('employees', function ($q) use ($employeeId) {
-                // kolom di tabel employees biasanya `id`
-                $q->where('employees.id', $employeeId);
-            })
-            ->orderByDesc('date_from')
+        $startDate = now()->startOfMonth()->toDateString();
+        $endDate   = now()->endOfMonth()->toDateString();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Today's schedule and attendance
+        |--------------------------------------------------------------------------
+        */
+        $todayIsVacation = Schedules::query()
+            ->where('id_employee', $employeeId)
+            ->whereDate('date', $today)
+            ->where('is_vacation', true)
+            ->exists();
+
+        $attendanceToday = Attendances::query()
+            ->where('id_employee', $employeeId)
+            ->whereDate('work_date', $today)
+            ->first();
+
+        $recentAttendances = Attendances::query()
+            ->where('id_employee', $employeeId)
+            ->latest('work_date')
+            ->take(7)
             ->get();
 
-            // Late Summary
-            $startDate = now()->startOfMonth()->toDateString();
-            $endDate   = now()->endOfMonth()->toDateString();
+        /*
+        |--------------------------------------------------------------------------
+        | Time balance
+        |--------------------------------------------------------------------------
+        */
+        $timeBalance = TimeBalances::query()
+            ->where('id_employee', $employeeId)
+            ->first();
 
-            $lateSummary = Attendances::where('id_employee', $employeeId)
-                ->whereBetween('work_date', [$startDate, $endDate])
-                ->where('is_late', true)
-                ->selectRaw("
-                    COUNT(*) as late_count,
-                    SUM(CASE WHEN late_type = 'with_permission' THEN 1 ELSE 0 END) as late_with_permission_count,
-                    SUM(CASE WHEN late_type = 'without_permission' THEN 1 ELSE 0 END) as late_without_permission_count
-                ")
-                ->first();
+        $balanceMinutes = $timeBalance?->net_minutes ?? 0;
 
-            $lateDetails = Attendances::where('id_employee', $employeeId)
-                ->whereBetween('work_date', [$startDate, $endDate])
-                ->where('is_late', true)
-                ->select([
-                    'id',
-                    'work_date',
-                    'check_in_at',
-                    'penalty_minutes',
-                    'is_late',
-                ])
-                ->orderByDesc('work_date')
-                ->take(3)
-                ->get();
-        }
+        /*
+        |--------------------------------------------------------------------------
+        | Announcements
+        |--------------------------------------------------------------------------
+        */
+        $announcements = Announcement::query()
+            ->active()
+            ->whereHas('employees', function ($query) use ($employeeId) {
+                $query->where('employees.id', $employeeId);
+            })
+            ->latest('date_from')
+            ->get();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Monthly lateness summary
+        |--------------------------------------------------------------------------
+        */
+        $lateSummary = Attendances::query()
+            ->where('id_employee', $employeeId)
+            ->whereBetween('work_date', [$startDate, $endDate])
+            ->where('is_late', true)
+            ->selectRaw("
+                COUNT(*) as late_count,
+                SUM(CASE WHEN late_type = 'with_permission' THEN 1 ELSE 0 END) as late_with_permission_count,
+                SUM(CASE WHEN late_type = 'without_permission' THEN 1 ELSE 0 END) as late_without_permission_count
+            ")
+            ->first();
+
+        $lateDetails = Attendances::query()
+            ->where('id_employee', $employeeId)
+            ->whereBetween('work_date', [$startDate, $endDate])
+            ->where('is_late', true)
+            ->select([
+                'id',
+                'work_date',
+                'check_in_at',
+                'penalty_minutes',
+                'late_type',
+            ])
+            ->latest('work_date')
+            ->take(3)
+            ->get();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Cuti & Tidak Masuk Summary
+        |--------------------------------------------------------------------------
+        */
+        $year = now()->year;
+        $vacationSummary = Vacations::query()
+            ->where('id_employee', $employeeId)
+            ->whereYear('date_of_vacation', $year)
+            ->whereIn('type', ['cuti', 'gone'])
+            ->selectRaw("
+                COUNT(*) as total_count,
+                SUM(CASE WHEN type = 'cuti' THEN 1 ELSE 0 END) as cuti_count,
+                SUM(CASE WHEN type = 'gone' THEN 1 ELSE 0 END) as gone_count
+            ")
+            ->first();
 
         return view('dashboard', compact(
             'attendanceToday',
             'recentAttendances',
-            'balance_minutes',
+            'balanceMinutes',
             'todayIsVacation',
             'announcements',
             'lateSummary',
-            'lateDetails'
+            'lateDetails',
+            'vacationSummary'
         ));
     }
 

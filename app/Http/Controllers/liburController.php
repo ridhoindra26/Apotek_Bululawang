@@ -9,6 +9,7 @@ use App\Models\Schedules;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class liburController extends Controller
 {
@@ -17,37 +18,51 @@ class liburController extends Controller
      */
     public function index(Request $request)
     {
-        $currentMonth = $request->input('bulan', now()->month);
-        $currentYear = $request->input('tahun', now()->year); 
+        $currentMonth = (int) $request->input('bulan', now()->month);
+        $currentYear  = (int) $request->input('tahun', now()->year);
 
-        $holidays = Vacations::with('employees')
+        $vacations = Vacations::with('employees:id,name')
             ->whereMonth('date_of_vacation', $currentMonth)
             ->whereYear('date_of_vacation', $currentYear)
-            ->get()
+            ->orderBy('date_of_vacation')
+            ->orderBy('id_employee')
+            ->get();
+
+        $holidays = $vacations
             ->map(function ($holiday) {
                 return [
+                    'id' => $holiday->id,
                     'date' => $holiday->date_of_vacation,
-                    'name' => $holiday->employees->name ?? 'Unknown',
+                    'name' => $holiday->employees?->name ?? 'Unknown',
+                    'type' => $holiday->type ?? 'libur',
+                    'description' => $holiday->description ?? '-',
                 ];
             })
-            ->groupBy('date');
+            ->groupBy('date')
+            ->toArray();
 
-        $summary = Vacations::with('employees')
-            ->whereMonth('date_of_vacation', $currentMonth)
-            ->whereYear('date_of_vacation', $currentYear)
-            ->get()
+        $summary = $vacations
             ->groupBy('id_employee')
             ->map(function ($days) {
                 return [
-                    'karyawan' => $days->first()->employees->name ?? 'Unknown',
-                    'dates' => $days->pluck('date_of_vacation')->toArray(),
+                    'karyawan' => $days->first()->employees?->name ?? 'Unknown',
                     'total' => $days->count(),
+
+                    // All arrays use the exact same record order.
+                    'dates' => $days->pluck('date_of_vacation')->toArray(),
+                    'types' => $days->map(fn ($day) => $day->type ?? 'libur')->toArray(),
                     'keterangan' => $days->pluck('description')->toArray(),
                     'ids' => $days->pluck('id')->toArray(),
                 ];
-            });
+            })
+            ->values();
 
-        return view('libur.index', compact('holidays', 'summary', 'currentMonth', 'currentYear'));
+        return view('libur.index', compact(
+            'holidays',
+            'summary',
+            'currentMonth',
+            'currentYear'
+        ));
     }
 
     /**
@@ -68,7 +83,8 @@ class liburController extends Controller
         $validated = $request->validate([
             'tanggal'    => 'required|date',
             'karyawan'   => 'required|exists:employees,id',
-            'keterangan' => 'required|string',
+            'type' => ['required', Rule::in(array_keys(Vacations::TYPES))],
+            'keterangan' => 'nullable|string',
         ]);
     
         DB::transaction(function () use ($validated) {
@@ -77,6 +93,7 @@ class liburController extends Controller
                 'date_of_vacation' => $validated['tanggal'],
                 'id_employee'      => $validated['karyawan'],
                 'description'      => $validated['keterangan'],
+                'type'             => $validated['type'],
             ]);
 
             // Update jadwal kalau ada
@@ -117,7 +134,8 @@ class liburController extends Controller
     {
         $validated = $request->validate([
             'tanggal'     => 'required|date',
-            'keterangan'  => 'required|string',
+            'keterangan'  => 'nullable|string',
+            'type' => ['required', Rule::in(array_keys(Vacations::TYPES))],
         ]);
 
         $holiday = Vacations::findOrFail($id);
@@ -148,6 +166,7 @@ class liburController extends Controller
             $holiday->update([
                 'date_of_vacation' => $newDate,
                 'description'      => $validated['keterangan'],
+                'type'             => $validated['type']
             ]);
         });
     
