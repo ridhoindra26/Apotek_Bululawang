@@ -3,6 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
     <link rel="icon" type="image/png" href="{{ asset('assets/img/logo.png') }}">
 
     <title>@yield('title', 'Login')</title>
@@ -60,7 +62,14 @@
         }
     </style>
 
+    {{-- Vite --}}
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    {{-- Remix Icons --}}
+    <link
+        href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css"
+        rel="stylesheet"
+    />
 
     <script>
         window.goodsReceiptFlash = {

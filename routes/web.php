@@ -24,6 +24,10 @@ use App\Http\Controllers\PayrollUserController;
 use App\Http\Controllers\HealthCheckController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\ShortUrlController;
+use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\GoodsReceiptController;
+use App\Http\Controllers\SupplierTtInvoiceController;
+use App\Http\Controllers\SupplierTtPaymentBatchController;
 
 Route::get('/', function () {
     return redirect()->route('auth.index');
@@ -64,6 +68,49 @@ Route::controller(AuthController::class)->group(function () {
     Route::post('/login', 'login')->middleware('guest')->name('auth.login');
     Route::post('/logout', 'logout')->middleware('auth')->name('auth.logout');
 });
+
+// Route::get('/penerimaan-barang', [GoodsReceiptController::class, 'index']);
+// Route::get('/penerimaan-barang/tambah', [GoodsReceiptController::class, 'create']);
+// Route::get('/penerimaan-barang/{goodsReceipt}', [GoodsReceiptController::class, 'show']);
+// Route::post('/goods-receipts', [GoodsReceiptController::class, 'store'])
+//             ->name('store');
+// Route::post('/goods-receipts/{goodsReceipt}/submit-approval', [GoodsReceiptController::class, 'submitApproval'])
+//             ->name('submit-approval');
+
+Route::prefix('goods-receipts')
+    ->name('goods-receipts.')
+    ->group(function () {
+        /*
+        |--------------------------------------------------------------------------
+        | Guest/Public Access
+        |--------------------------------------------------------------------------
+        */
+        Route::get('/', [GoodsReceiptController::class, 'index'])
+            ->name('index');
+
+        Route::get('/create', [GoodsReceiptController::class, 'create'])
+            ->name('create');
+
+        Route::post('/', [GoodsReceiptController::class, 'store'])
+            ->name('store');
+
+        Route::get('/{goodsReceipt}', [GoodsReceiptController::class, 'show'])
+            ->name('show');
+
+        Route::get('/{goodsReceipt}/edit', [GoodsReceiptController::class, 'edit'])
+            ->name('edit');
+
+        Route::put('/{goodsReceipt}', [GoodsReceiptController::class, 'update'])
+            ->name('update');
+
+        Route::patch('/{goodsReceipt}', [GoodsReceiptController::class, 'update']);
+
+        Route::post('/{goodsReceipt}/submit-approval', [GoodsReceiptController::class, 'submitApproval'])
+            ->name('submit-approval');
+
+        Route::post('/{goodsReceipt}/draft', [GoodsReceiptController::class, 'draft'])
+            ->name('draft');
+    });
 
 /**
  * Protected routes: require auth + single.session
@@ -224,7 +271,107 @@ Route::middleware(['auth', 'single.session'])->group(function () {
             Route::delete('/shortener/{shortUrl}', 'destroy')->name('shortener.destroy');
         });
 
+        Route::delete('suppliers/{supplier}', [SupplierController::class, 'destroy'])
+            ->name('suppliers.destroy');
+
+        // Route::resource('goods-receipts', GoodsReceiptController::class);
+
+        // Route::post('goods-receipts/{goodsReceipt}/submit-approval', [
+        //     GoodsReceiptController::class,
+        //     'submitApproval'
+        // ])->name('goods-receipts.submit-approval');
+
+        Route::delete('goods-receipts/{goodsReceipt}', [
+            GoodsReceiptController::class,
+            'destroy'
+            ])->middleware('role:superadmin')->name('goods-receipts.destroy');
+
     });
+
+    Route::middleware('role:admin,superadmin')->group(function () {
+        Route::get('suppliers/import', [SupplierController::class, 'importForm'])->name('suppliers.import.form');
+        Route::post('suppliers/import', [SupplierController::class, 'import'])->name('suppliers.import');
+        Route::get('suppliers/import/template', [SupplierController::class, 'downloadImportTemplate'])->name('suppliers.import.template');
+        Route::resource('suppliers', SupplierController::class)->except('destroy');
+
+        Route::post('goods-receipts/{goodsReceipt}/approve', [
+            GoodsReceiptController::class,
+            'approve'
+        ])->name('goods-receipts.approve');
+
+        Route::post('goods-receipts/{goodsReceipt}/reject', [
+            GoodsReceiptController::class,
+            'reject'
+        ])->name('goods-receipts.reject');
+
+        Route::post('goods-receipts/{goodsReceipt}/cancel', [
+            GoodsReceiptController::class,
+            'cancel'
+        ])->name('goods-receipts.cancel');
+    });
+
+    Route::prefix('supplier-tt-invoices')
+        ->name('supplier-tt-invoices.')
+        ->middleware('role:superadmin,admin')
+        ->group(function () {
+            Route::get('/', [SupplierTtInvoiceController::class, 'index'])
+                ->name('index');
+
+            Route::get('/create', [SupplierTtInvoiceController::class, 'create'])
+                ->name('create');
+
+            Route::post('/', [SupplierTtInvoiceController::class, 'store'])
+                ->name('store');
+
+            Route::get('/available-goods-receipts', [
+                SupplierTtInvoiceController::class,
+                'availableGoodsReceipts'
+            ])->name('available-goods-receipts');
+
+            Route::get('/{supplierTtInvoice}', [SupplierTtInvoiceController::class, 'show'])
+                ->name('show');
+
+            Route::get('/{supplierTtInvoice}/edit', [SupplierTtInvoiceController::class, 'edit'])
+                ->name('edit');
+
+            Route::post('/{supplierTtInvoice}/prepare-edit', [SupplierTtInvoiceController::class, 'prepareEdit'])
+                ->name('prepare-edit');
+
+            Route::put('/{supplierTtInvoice}', [SupplierTtInvoiceController::class, 'update'])
+                ->name('update');
+
+            Route::patch('/{supplierTtInvoice}', [SupplierTtInvoiceController::class, 'update']);
+
+            Route::post('/{supplierTtInvoice}/verify', [SupplierTtInvoiceController::class, 'verify'])
+                ->name('verify');
+
+            Route::post('/{supplierTtInvoice}/draft', [SupplierTtInvoiceController::class, 'moveToDraft'])
+                ->name('draft');
+
+            Route::post('/{supplierTtInvoice}/cancel', [SupplierTtInvoiceController::class, 'cancel'])
+                ->name('cancel');
+
+            Route::delete('/{supplierTtInvoice}', [SupplierTtInvoiceController::class, 'destroy'])
+                ->name('destroy');
+        });
+
+    Route::prefix('supplier-tt-payment-batches')
+        ->name('supplier-tt-payment-batches.')
+        ->middleware('role:superadmin,admin')
+        ->controller(SupplierTtPaymentBatchController::class)
+        ->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/create', 'create')->name('create');
+            Route::post('/', 'store')->name('store');
+            Route::get('/{supplierTtPaymentBatch}', 'show')->name('show');
+            Route::get('/{supplierTtPaymentBatch}/edit', 'edit')->name('edit');
+            Route::put('/{supplierTtPaymentBatch}', 'update')->name('update');
+            Route::delete('/{supplierTtPaymentBatch}', 'destroy')->middleware('role:superadmin')->name('destroy');
+            Route::post('/{supplierTtPaymentBatch}/lock-pdf', 'lockAndPdf')->name('lock-pdf');
+            Route::get('/{supplierTtPaymentBatch}/pdf', 'pdf')->name('pdf');
+            Route::post('/{supplierTtPaymentBatch}/unlock', 'unlock')->name('unlock');
+            Route::post('/{supplierTtPaymentBatch}/paid', 'markPaid')->name('paid');
+        });
 
     /**
      * Attendance

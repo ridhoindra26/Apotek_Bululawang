@@ -579,7 +579,10 @@ class AttendanceController extends Controller
 
     public function lateness_index(Request $request)
     {
-        abort_unless(auth()->user()?->hasRole('superadmin'), 403);
+        abort_unless(
+            auth()->user()?->hasRole('superadmin') || auth()->user()?->hasRole('admin'),
+            403
+        );
 
         $month    = $request->input('month', now()->format('Y-m'));
         $branchId = $request->input('branch_id');
