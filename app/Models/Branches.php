@@ -22,4 +22,19 @@ class Branches extends Model
     {
         return $this->hasMany(Schedules::class, 'id_branch');
     }
+
+    public function supplierTtInvoices()
+    {
+        return $this->hasMany(SupplierTtInvoice::class, 'branch_id');
+    }
+
+    public function goodsReceipts()
+    {
+        return $this->hasMany(GoodsReceipt::class, 'branch_id');
+    }
+
+    public function supplierTtPaymentBatches()
+    {
+        return $this->hasMany(SupplierTtPaymentBatch::class, 'branch_id');
+    }
 }

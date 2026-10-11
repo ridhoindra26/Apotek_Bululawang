@@ -31,3 +31,6 @@ import "./shortener/show";
 import "./suppliers/index";
 import "./goods-receipts/index";
 import "./goods-receipts/create";
+
+import "./supplier-tt-invoices/index";
+import "./supplier-tt-invoices/create";
