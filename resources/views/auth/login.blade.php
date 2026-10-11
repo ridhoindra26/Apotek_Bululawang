@@ -12,6 +12,19 @@
   };
 @endphp
 
+@if (session('error'))
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Sesi Berakhir',
+            text: @json(session('error')),
+            confirmButtonText: 'OK'
+        });
+    });
+</script>
+@endif
+
 <div class="w-full max-w-md mx-auto p-6">
   <div class="bg-white/90 backdrop-blur rounded-2xl shadow-lg border border-slate-200 p-8 sm:p-10">
     <div class="mb-8 text-center">
@@ -34,7 +47,7 @@
       </div>
     @endif
 
-    <form method="POST" action="{{ route('auth.login') }}" class="space-y-6">
+    <form method="POST" action="{{ route('auth.login') }}" class="space-y-6" id="loginForm">
       @csrf
 
       <div>
@@ -98,4 +111,63 @@
     © {{ date('Y') }} PT. Bululawang Jaya Farma. All rights reserved.
   </p>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('loginForm');
+
+    if (!form) return;
+
+    form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const submitButton = form.querySelector('[type="submit"]');
+        const csrfInput = form.querySelector('input[name="_token"]');
+
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.dataset.originalText = submitButton.innerHTML;
+            submitButton.innerHTML = 'Memproses...';
+        }
+
+        try {
+            const response = await fetch('{{ route('csrf.token') }}', {
+                method: 'GET',
+                credentials: 'same-origin',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+
+                if (csrfInput && data.token) {
+                    csrfInput.value = data.token;
+                }
+
+                const meta = document.querySelector('meta[name="csrf-token"]');
+                if (meta && data.token) {
+                    meta.setAttribute('content', data.token);
+                }
+            }
+
+            form.submit();
+        } catch (error) {
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.innerHTML = submitButton.dataset.originalText || 'Login';
+            }
+
+            Swal.fire({
+                icon: 'warning',
+                title: 'Sesi Tidak Valid',
+                text: 'Silakan refresh halaman lalu login kembali.',
+                confirmButtonText: 'OK'
+            });
+        }
+    });
+});
+</script>
 @endsection

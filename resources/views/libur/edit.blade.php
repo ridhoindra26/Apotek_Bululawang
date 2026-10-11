@@ -6,6 +6,36 @@
     <form action="{{ route('libur.update', $holiday->id) }}" method="POST">
         @csrf
         @method('POST')
+
+        <div class="mb-4">
+            <label for="type" class="block text-sm font-medium text-gray-700">
+                Jenis Ketidakhadiran
+            </label>
+
+            <select id="type" name="type" required
+                class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-[#318f8c] focus:ring-[#318f8c] sm:text-sm">
+
+                <option value="cuti"
+                    @selected(old('type', $holiday->type) === 'cuti')>
+                    Cuti
+                </option>
+
+                <option value="libur"
+                    @selected(old('type', $holiday->type) === 'libur')>
+                    Libur
+                </option>
+
+                <option value="absent"
+                    @selected(old('type', $holiday->type) === 'absent')>
+                    Tidak Masuk
+                </option>
+            </select>
+
+            @error('type')
+                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+            @enderror
+        </div>
+
         <!-- Tanggal -->
         <div class="mb-4">
             <label for="tanggal" class="block text-sm font-medium text-gray-700">Tanggal</label>
