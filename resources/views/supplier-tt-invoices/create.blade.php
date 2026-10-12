@@ -522,6 +522,8 @@
                             </span>
                             <input
                                 type="text"
+                                inputmode="numeric"
+                                pattern="[0-9]*"
                                 name="gross_nominal"
                                 x-model="grossNominal"
                                 @input="normalizeGrossNominal"
@@ -688,6 +690,8 @@
                                         </span>
                                         <input
                                             type="text"
+                                            inputmode="numeric"
+                                            pattern="[0-9]*"
                                             :name="`deductions[${index}][amount]`"
                                             x-model="deduction.amount"
                                             @input="normalizeDeduction(index)"

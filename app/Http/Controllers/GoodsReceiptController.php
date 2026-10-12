@@ -279,12 +279,18 @@ class GoodsReceiptController extends Controller
     {
         $this->authorizeSuperadmin();
 
-        DB::transaction(function () use ($goodsReceipt) {
-            $this->deleteExistingInvoicesAndPhotos($goodsReceipt);
-            $this->deleteExistingSignatures($goodsReceipt);
+        $pathsToDelete = DB::transaction(function () use ($goodsReceipt) {
+            $invoicePhotoPaths = $this->deleteExistingInvoicesAndPhotos($goodsReceipt);
+            $signaturePaths = $this->deleteExistingSignatures($goodsReceipt);
 
             $goodsReceipt->delete();
+
+            return array_values(array_unique(array_merge($invoicePhotoPaths, $signaturePaths)));
         });
+
+        foreach ($pathsToDelete as $path) {
+            Storage::disk('public')->delete($path);
+        }
 
         return redirect()
             ->route('goods-receipts.index')
@@ -728,32 +734,35 @@ class GoodsReceiptController extends Controller
         return 'partially_rejected';
     }
 
-    private function deleteExistingInvoicesAndPhotos(GoodsReceipt $goodsReceipt): void
+    private function deleteExistingInvoicesAndPhotos(GoodsReceipt $goodsReceipt): array
     {
         $goodsReceipt->loadMissing('invoices.pages');
 
-        foreach ($goodsReceipt->invoices as $invoice) {
-            foreach ($invoice->pages as $page) {
-                if ($page->path) {
-                    Storage::disk('public')->delete($page->path);
-                }
-            }
-        }
+        $paths = $goodsReceipt->invoices
+            ->pluck('pages')
+            ->flatten()
+            ->pluck('path')
+            ->filter()
+            ->values()
+            ->all();
 
         $goodsReceipt->invoices()->delete();
+
+        return $paths;
     }
 
-    private function deleteExistingSignatures(GoodsReceipt $goodsReceipt): void
+    private function deleteExistingSignatures(GoodsReceipt $goodsReceipt): array
     {
         $goodsReceipt->loadMissing('signatures');
+        $signature = $goodsReceipt->signatures;
 
-        foreach ($goodsReceipt->signatures as $signature) {
-            if ($signature->signature_path) {
-                Storage::disk('public')->delete($signature->signature_path);
-            }
-        }
+        $paths = $signature?->signature_path
+            ? [$signature->signature_path]
+            : [];
 
         $goodsReceipt->signatures()->delete();
+
+        return $paths;
     }
 
     private function deleteSelectedInvoicePhotos(GoodsReceipt $goodsReceipt, array $photoIds): void

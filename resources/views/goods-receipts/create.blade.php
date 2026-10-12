@@ -513,6 +513,8 @@
                                         </span>
                                         <input
                                             type="text"
+                                            inputmode="numeric"
+                                            pattern="[0-9]*"
                                             :name="`invoices[${invoiceIndex}][nominal]`"
                                             x-model="invoice.nominal"
                                             @input="normalizeNominal(invoiceIndex)"
