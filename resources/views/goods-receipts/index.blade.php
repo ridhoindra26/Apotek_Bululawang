@@ -56,22 +56,38 @@
                 >
             </div>
 
-            <div>
-                <label for="supplier_id" class="mb-1 block text-sm font-medium text-gray-700">
+            <div
+                x-data="searchableSelect({
+                    options: @js($suppliers->map(fn ($supplier) => ['id' => (string) $supplier->id, 'label' => $supplier->name])->values()),
+                    selectedId: @js((string) request('supplier_id', '')),
+                    selectedLabel: @js($suppliers->firstWhere('id', request('supplier_id'))?->name ?? ''),
+                    placeholder: 'Semua Supplier'
+                })"
+                class="relative"
+                @click.outside="open = false"
+            >
+                <label class="mb-1 block text-sm font-medium text-gray-700">
                     Supplier
                 </label>
-                <select
-                    id="supplier_id"
-                    name="supplier_id"
-                    class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2"
-                >
-                    <option value="">Semua</option>
-                    @foreach ($suppliers as $supplier)
-                        <option value="{{ $supplier->id }}" @selected((string) request('supplier_id') === (string) $supplier->id)>
-                            {{ $supplier->name }}
-                        </option>
-                    @endforeach
-                </select>
+                <input type="hidden" name="supplier_id" :value="selectedId">
+                <button type="button" @click="open = !open" class="flex min-h-11 w-full items-center justify-between rounded-xl border border-gray-300 bg-white px-3 py-2 text-left text-sm shadow-sm focus:border-[#318f8c] focus:ring-[#318f8c]">
+                    <span class="truncate" :class="selectedLabel ? 'text-gray-900' : 'text-gray-400'" x-text="selectedLabel || placeholder"></span>
+                    <i class="text-lg text-gray-500" :class="open ? 'ri-arrow-up-s-line' : 'ri-arrow-down-s-line'"></i>
+                </button>
+                <div x-show="open" x-cloak class="absolute z-50 mt-2 w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
+                    <div class="border-b border-gray-100 p-2">
+                        <input x-ref="searchInput" x-model="search" @keydown.enter.prevent type="text" placeholder="Cari supplier..." class="block w-full rounded-lg border-gray-300 px-3 py-2 text-sm focus:border-[#318f8c] focus:ring-[#318f8c]">
+                    </div>
+                    <div class="max-h-60 overflow-y-auto p-1">
+                        <template x-if="filteredOptions.length === 0"><div class="px-3 py-3 text-sm text-gray-500">Supplier tidak ditemukan.</div></template>
+                        <template x-for="option in filteredOptions" :key="option.id">
+                            <button type="button" @click="choose(option)" class="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm hover:bg-teal-50" :class="String(option.id) === selectedId ? 'bg-teal-50 text-[#287c79]' : 'text-gray-700'">
+                                <span x-text="option.label"></span><i x-show="String(option.id) === selectedId" class="ri-check-line text-lg"></i>
+                            </button>
+                        </template>
+                    </div>
+                    <button x-show="selectedId" type="button" @click="clear" class="w-full border-t border-gray-100 px-3 py-2 text-left text-xs font-semibold text-red-600 hover:bg-red-50">Hapus pilihan</button>
+                </div>
             </div>
 
             <div>

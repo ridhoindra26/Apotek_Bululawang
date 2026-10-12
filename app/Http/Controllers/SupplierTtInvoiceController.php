@@ -19,7 +19,9 @@ class SupplierTtInvoiceController extends Controller
 
     public function index(Request $request)
     {
-        $query = SupplierTtInvoice::query()->with(['supplier', 'branch', 'goodsReceipt', 'paymentBatch'])->withCount('photos');
+        $query = SupplierTtInvoice::query()
+            ->with(['supplier', 'branch', 'goodsReceipt', 'paymentBatch'])
+            ->withCount('photos');
 
         if ($request->filled('search')) {
             $search = $request->string('search')->trim()->toString();
@@ -31,7 +33,11 @@ class SupplierTtInvoiceController extends Controller
         }
         if ($request->filled('supplier_id')) $query->where('supplier_id', $request->integer('supplier_id'));
         if ($request->filled('branch_id')) $query->where('branch_id', $request->integer('branch_id'));
-        if ($request->filled('status')) $query->where('status', $request->string('status'));
+        if ($request->filled('status')) {
+            $query->where('status', $request->string('status'));
+        } else {
+            $query->where('status', '!=', 'paid');
+        }
         if ($request->filled('due_status')) {
             match ($request->string('due_status')->toString()) {
                 'due_today' => $query->dueToday(), 'due_soon' => $query->dueSoon(), 'overdue' => $query->overdue(), default => null,
