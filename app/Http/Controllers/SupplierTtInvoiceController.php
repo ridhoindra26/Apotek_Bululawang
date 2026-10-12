@@ -236,7 +236,7 @@ class SupplierTtInvoiceController extends Controller
         $required = $isVerifying ? 'required' : 'nullable';
         $data = $request->validate([
             'supplier_id' => [$required, 'integer', 'exists:suppliers,id'], 'branch_id' => [$required, 'integer', 'exists:branches,id'], 'goods_receipt_id' => ['nullable', 'integer', 'exists:goods_receipts,id'],
-            'invoice_number' => [$required, 'string', 'max:255', Rule::unique('supplier_tt_invoices', 'invoice_number')->where(fn ($q) => $q->where('supplier_id', $request->input('supplier_id')))->ignore($invoice?->id)],
+            'invoice_number' => [$required, 'string', 'max:255'],
             'invoice_date' => [$required, 'date'], 'received_date' => [$required, 'date'], 'due_date' => [$required, 'date', 'after_or_equal:invoice_date'],
             'gross_nominal' => [$required, 'numeric', $isVerifying ? 'gt:0' : 'min:0'], 'notes' => ['nullable', 'string'],
             'submit_action' => ['required', Rule::in(['draft', 'verify'])], 'verification_note' => ['nullable', 'string'],

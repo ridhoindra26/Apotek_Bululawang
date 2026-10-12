@@ -43,7 +43,13 @@ class SupplierTtPaymentBatchController extends Controller
     public function create()
     {
         $branches = Branches::orderBy('name')->get(['id', 'name']);
-        $invoices = SupplierTtInvoice::with(['supplier:id,name', 'branch:id,name'])->where('status', 'verified')->whereNotNull('branch_id')->orderBy('due_date')->get();
+        $invoices = SupplierTtInvoice::with(['supplier:id,name', 'branch:id,name'])
+            ->where('status', 'verified')
+            ->whereNotNull('branch_id')
+            ->orderByRaw('CASE WHEN due_date IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('due_date')
+            ->orderBy('id')
+            ->get();
         return view('supplier-tt-payment-batches.create', compact('branches', 'invoices'));
     }
 
@@ -84,7 +90,11 @@ class SupplierTtPaymentBatchController extends Controller
         $branches = Branches::orderBy('name')->get(['id', 'name']);
         $invoices = SupplierTtInvoice::with(['supplier:id,name', 'branch:id,name'])
             ->where(fn ($q) => $q->where('status', 'verified')->orWhereHas('paymentBatch', fn ($batch) => $batch->whereKey($supplierTtPaymentBatch->id)))
-            ->whereNotNull('branch_id')->orderBy('due_date')->get();
+            ->whereNotNull('branch_id')
+            ->orderByRaw('CASE WHEN due_date IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('due_date')
+            ->orderBy('id')
+            ->get();
         return view('supplier-tt-payment-batches.create', ['batch' => $supplierTtPaymentBatch, 'branches' => $branches, 'invoices' => $invoices]);
     }
 

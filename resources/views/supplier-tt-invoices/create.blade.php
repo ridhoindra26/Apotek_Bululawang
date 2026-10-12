@@ -461,15 +461,19 @@
                 <div class="grid grid-cols-1 gap-2 md:grid-cols-2">
                     <div>
                         <label class="mb-1 block text-sm font-medium text-gray-700">
-                            Nomor Faktur TT <span class="text-red-500">*</span>
+                            5 Digit Terakhir Nomor Faktur <span class="text-red-500">*</span>
                         </label>
                         <input
                             type="text"
                             name="invoice_number"
                             x-model="invoiceNumber"
+                            @input="invoiceNumber = String(invoiceNumber || '').replace(/\D/g, '').slice(0, 5)"
+                            inputmode="numeric"
+                            maxlength="5"
                             class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-[#318f8c] focus:ring-[#318f8c] px-3 py-2"
-                            placeholder="Contoh: TT-001"
+                            placeholder="Contoh: 12345"
                         >
+                        <p class="mt-1 text-xs text-gray-500">Masukkan 5 digit terakhir. Nomor yang sama tetap diperbolehkan.</p>
                     </div>
 
                     <div>
@@ -560,23 +564,11 @@
                         Foto Faktur TT <span class="text-red-500">*</span>
                     </label>
 
-                    <label class="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-gray-50/70 px-4 py-8 text-center transition hover:border-[#318f8c] hover:bg-[#318f8c]/5">
-                        <div class="text-sm font-semibold text-gray-800">
-                            Klik untuk upload halaman faktur
-                        </div>
-                        <div class="mt-1 text-xs text-gray-500">
-                            Bisa pilih lebih dari satu gambar.
-                        </div>
-
-                        <input
-                            type="file"
-                            name="photos[]"
-                            class="hidden"
-                            accept="image/*"
-                            multiple
-                            @change="handlePhotos"
-                            data-supplier-tt-photo-input
-                        >
+                    <label class="flex min-h-28 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#318f8c]/40 bg-teal-50/60 px-4 py-5 text-center transition hover:border-[#318f8c] hover:bg-teal-50">
+                        <i class="ri-camera-line text-3xl text-[#318f8c]"></i>
+                        <span class="mt-1 text-sm font-semibold text-gray-800">Tambah Foto Faktur</span>
+                        <span class="mt-1 text-xs text-gray-500">Pilih kamera atau galeri dari perangkat. Galeri mendukung beberapa foto.</span>
+                        <input type="file" name="photos[]" class="hidden" accept="image/*" multiple @change="handlePhotos" data-supplier-tt-photo-input>
                     </label>
 
                     <div x-show="isCompressing" x-cloak class="mt-3 rounded-lg bg-blue-50 p-3 text-sm text-blue-700">
