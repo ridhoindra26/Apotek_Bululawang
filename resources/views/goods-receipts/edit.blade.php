@@ -521,15 +521,19 @@
                             <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
                                 <div>
                                     <label class="mb-1 block text-sm font-medium text-gray-700">
-                                        No Faktur
+                                        5 Digit Terakhir No Faktur
                                     </label>
                                     <input
                                         type="text"
                                         :name="`invoices[${invoiceIndex}][invoice_number]`"
                                         x-model="invoice.invoice_number"
+                                        @input="invoice.invoice_number = String(invoice.invoice_number || '').replace(/\D/g, '').slice(0, 5)"
+                                        inputmode="numeric"
+                                        maxlength="5"
                                         class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2"
-                                        placeholder="Contoh: FK-001"
+                                        placeholder="Contoh: 12345"
                                     >
+                                    <p class="mt-1 text-xs text-gray-500">Nomor yang sama diperbolehkan.</p>
                                 </div>
 
                                 <div>
@@ -581,23 +585,11 @@
                                     </div>
                                 </div>
 
-                                <label class="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-center hover:bg-gray-100">
-                                    <div class="text-sm font-semibold text-gray-800">
-                                        Klik untuk tambah halaman faktur
-                                    </div>
-                                    <div class="mt-1 text-xs text-gray-500">
-                                        Format gambar. Bisa pilih lebih dari satu file.
-                                    </div>
-
-                                    <input
-                                        type="file"
-                                        class="hidden"
-                                        accept="image/*"
-                                        multiple
-                                        :name="`invoices[${invoiceIndex}][photos][]`"
-                                        :data-invoice-file-input="invoice.id"
-                                        @change="handleInvoicePages($event, invoiceIndex)"
-                                    >
+                                <label class="flex min-h-24 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#318f8c]/40 bg-teal-50/60 px-4 py-4 text-center transition hover:border-[#318f8c] hover:bg-teal-50">
+                                    <i class="ri-camera-line text-2xl text-[#318f8c]"></i>
+                                    <span class="mt-1 text-sm font-semibold text-gray-800">Tambah Foto Faktur</span>
+                                    <span class="mt-1 text-xs text-gray-500">Pilih kamera atau galeri dari perangkat. Galeri mendukung beberapa foto.</span>
+                                    <input type="file" class="hidden" accept="image/*" multiple :name="`invoices[${invoiceIndex}][photos][]`" :data-invoice-file-input="invoice.id" @change="handleInvoicePages($event, invoiceIndex)">
                                 </label>
                             </div>
 

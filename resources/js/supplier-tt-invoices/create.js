@@ -260,7 +260,15 @@ document.addEventListener('alpine:init', () => {
                     })
                 }
 
-                this.syncPhotoInput(input)
+                const canonicalInput = document.querySelector('[data-supplier-tt-photo-input]')
+
+                if (canonicalInput) {
+                    this.syncPhotoInput(canonicalInput)
+                }
+
+                if (input !== canonicalInput) {
+                    input.value = ''
+                }
             } catch (error) {
                 this.showWarning(error.message || 'Gagal compress foto.')
             } finally {

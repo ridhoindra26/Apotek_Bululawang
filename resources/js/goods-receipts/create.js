@@ -277,7 +277,17 @@ document.addEventListener('alpine:init', () => {
                     })
                 }
 
-                this.syncInvoiceFileInput(input, invoiceIndex)
+                const canonicalInput = document.querySelector(
+                    `[data-invoice-file-input="${this.invoices[invoiceIndex].id}"]`
+                )
+
+                if (canonicalInput) {
+                    this.syncInvoiceFileInput(canonicalInput, invoiceIndex)
+                }
+
+                if (input !== canonicalInput) {
+                    input.value = ''
+                }
             } catch (error) {
                 this.showWarning(error.message || 'Gagal compress gambar.')
             } finally {

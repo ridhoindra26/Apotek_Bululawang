@@ -12,9 +12,12 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class GoodsReceiptController extends Controller
 {
+    private const RECEIVER_EMPLOYEE_IDS = [4, 8, 14, 16, 17, 20, 31, 32, 35, 40, 44];
+
     public function index(Request $request)
     {
         // allow access for guests or users with role admin or superadmin
@@ -89,8 +92,7 @@ class GoodsReceiptController extends Controller
             ->get(['id', 'name']);
 
         $employees = Employees::query()
-            ->where('id_role', '<>', 13)
-            ->where('id_branch', '=', 2)
+            ->whereIn('id', self::RECEIVER_EMPLOYEE_IDS)
             ->orderBy('name')
             ->get(['id', 'name']);
 
@@ -187,7 +189,7 @@ class GoodsReceiptController extends Controller
             ->get(['id', 'name']);
 
         $employees = Employees::query()
-            ->where('id_role', '<>', 13)
+            ->whereIn('id', self::RECEIVER_EMPLOYEE_IDS)
             ->orderBy('name')
             ->get(['id', 'name']);
 
@@ -453,7 +455,7 @@ class GoodsReceiptController extends Controller
             'branch_id' => [$required, 'exists:branches,id'],
 
             'sp_reference_number' => [$required, 'string', 'max:255'],
-            'received_by' => [$required, 'exists:employees,id'],
+            'received_by' => [$required, 'integer', 'exists:employees,id', Rule::in(self::RECEIVER_EMPLOYEE_IDS)],
             'sender_name' => [$required, 'string', 'max:255'],
 
             'notes' => ['nullable', 'string'],
@@ -503,6 +505,7 @@ class GoodsReceiptController extends Controller
 
             'received_by.required' => 'Nama penerima wajib dipilih.',
             'received_by.exists' => 'Nama penerima tidak valid.',
+            'received_by.in' => 'Nama penerima tidak termasuk dalam daftar penerima Good Receipt yang diizinkan.',
 
             'sender_name.required' => 'Nama kurir / pengirim wajib diisi.',
             'sender_name.max' => 'Nama kurir / pengirim maksimal 255 karakter.',
