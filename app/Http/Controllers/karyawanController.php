@@ -154,7 +154,26 @@ class karyawanController extends Controller
         // Load it safely (won't break if not defined)
         $user->loadMissing('employee');
 
-        return view('profile.index', compact('user'));
+        $rewardSummary = null;
+        $suggestionSummary = null;
+        if ($user->id_employee) {
+            $rewardSummary = \App\Models\SuggestionReward::query()
+                ->whereHas('suggestion', fn ($query) => $query->where('submitted_by_employee_id', $user->id_employee))
+                ->selectRaw("SUM(CASE WHEN status IN ('pending', 'delivered') THEN 1 ELSE 0 END) total")
+                ->selectRaw("SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) pending")
+                ->selectRaw("SUM(CASE WHEN status = 'delivered' THEN 1 ELSE 0 END) delivered")
+                ->selectRaw("SUM(CASE WHEN status = 'delivered' AND type = 'money' THEN amount ELSE 0 END) delivered_money")
+                ->first();
+
+            $suggestionSummary = \App\Models\Suggestion::query()
+                ->where('submitted_by_employee_id', $user->id_employee)
+                ->selectRaw('COUNT(*) submitted')
+                ->selectRaw('SUM(CASE WHEN accepted_at IS NOT NULL THEN 1 ELSE 0 END) accepted')
+                ->selectRaw("SUM(CASE WHEN status = 'implemented' THEN 1 ELSE 0 END) implemented")
+                ->first();
+        }
+
+        return view('profile.index', compact('user', 'rewardSummary', 'suggestionSummary'));
     }
 
     public function editPassword()

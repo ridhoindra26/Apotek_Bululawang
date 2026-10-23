@@ -30,6 +30,28 @@
         </div>
     </div>
 
+    @if($rewardSummary)
+    <div class="rounded-2xl border border-violet-200 bg-white p-4 shadow-sm sm:p-6">
+        <h2 class="mb-4 text-sm font-semibold text-slate-800"><i class="ri-gift-line text-violet-600"></i> Ringkasan Reward Saran</h2>
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div class="rounded-xl bg-slate-50 p-3"><small class="text-slate-500">Total</small><b class="block text-xl">{{ number_format($rewardSummary->total ?? 0) }}</b></div>
+            <div class="rounded-xl bg-amber-50 p-3"><small class="text-amber-700">Menunggu</small><b class="block text-xl">{{ number_format($rewardSummary->pending ?? 0) }}</b></div>
+            <div class="rounded-xl bg-teal-50 p-3"><small class="text-teal-700">Diserahkan</small><b class="block text-xl">{{ number_format($rewardSummary->delivered ?? 0) }}</b></div>
+            <div class="rounded-xl bg-violet-50 p-3"><small class="text-violet-700">Total Uang</small><b class="block text-sm">Rp {{ number_format($rewardSummary->delivered_money ?? 0,0,',','.') }}</b></div>
+        </div>
+    </div>
+    @endif
+
+    @if($suggestionSummary)
+    <div class="rounded-2xl border border-teal-200 bg-white p-4 shadow-sm sm:p-6">
+        <div class="mb-4 flex items-center justify-between"><h2 class="text-sm font-semibold text-slate-800"><i class="ri-lightbulb-line text-[#318f8c]"></i> Kontribusi Improvement</h2><a href="{{ route('suggestions.mine') }}" class="text-xs font-bold text-[#318f8c]">Lihat saran saya</a></div>
+        <div class="grid grid-cols-2 gap-2">
+            <div class="rounded-xl bg-slate-50 p-3"><small class="text-slate-500">Diajukan</small><b class="block text-xl">{{ number_format($suggestionSummary->submitted ?? 0) }}</b></div>
+            <div class="rounded-xl bg-teal-50 p-3"><small class="text-teal-700">Diimplementasikan</small><b class="block text-xl">{{ number_format($suggestionSummary->implemented ?? 0) }}</b></div>
+        </div>
+    </div>
+    @endif
+
     {{-- Account details (read-only) --}}
     <div class="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
         <h2 class="text-sm font-semibold text-slate-800 mb-4">Profil Saya</h2>

@@ -569,8 +569,8 @@
                     <label class="flex min-h-28 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#318f8c]/40 bg-teal-50/60 px-4 py-5 text-center transition hover:border-[#318f8c] hover:bg-teal-50">
                         <i class="ri-camera-line text-3xl text-[#318f8c]"></i>
                         <span class="mt-1 text-sm font-semibold text-gray-800">Tambah Foto Faktur</span>
-                        <span class="mt-1 text-xs text-gray-500">Pilih kamera atau galeri dari perangkat. Galeri mendukung beberapa foto.</span>
-                        <input type="file" name="photos[]" class="hidden" accept="image/*" multiple @change="handlePhotos" data-supplier-tt-photo-input>
+                        <span class="mt-1 text-xs text-gray-500">Buka kamera belakang. Tekan lagi untuk menambah foto.</span>
+                        <input type="file" name="photos[]" class="hidden" accept="image/*" capture="environment" @change="handlePhotos" data-supplier-tt-photo-input>
                     </label>
 
                     <div x-show="isCompressing" x-cloak class="mt-3 rounded-lg bg-blue-50 p-3 text-sm text-blue-700">

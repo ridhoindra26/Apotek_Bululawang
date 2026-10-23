@@ -140,6 +140,29 @@
         </label>
     </div>
 
+    <div class="md:col-span-2 mt-2 border-t border-gray-200 pt-5">
+        <h2 class="text-base font-semibold text-gray-900">Informasi Rekening</h2>
+        <p class="mt-1 text-sm text-gray-500">Data rekening tujuan pembayaran supplier.</p>
+    </div>
+
+    <div>
+        <label for="bank_name" class="mb-1 block text-sm font-medium text-gray-700">Bank Rekening</label>
+        <input type="text" id="bank_name" name="bank_name" value="{{ old('bank_name', $supplier->bank_name ?? '') }}" class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('bank_name') border-red-500 @enderror" placeholder="Contoh: BCA">
+        @error('bank_name')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+    </div>
+
+    <div>
+        <label for="bank_account_number" class="mb-1 block text-sm font-medium text-gray-700">Nomor Rekening</label>
+        <input type="text" inputmode="numeric" id="bank_account_number" name="bank_account_number" value="{{ old('bank_account_number', $supplier->bank_account_number ?? '') }}" class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('bank_account_number') border-red-500 @enderror" placeholder="Masukkan nomor rekening">
+        @error('bank_account_number')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+    </div>
+
+    <div class="md:col-span-2">
+        <label for="bank_account_holder" class="mb-1 block text-sm font-medium text-gray-700">Nama Pemilik Rekening</label>
+        <input type="text" id="bank_account_holder" name="bank_account_holder" value="{{ old('bank_account_holder', $supplier->bank_account_holder ?? '') }}" class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('bank_account_holder') border-red-500 @enderror" placeholder="Nama sesuai rekening bank">
+        @error('bank_account_holder')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+    </div>
+
     <div class="md:col-span-2">
         <label for="address" class="mb-1 block text-sm font-medium text-gray-700">
             Alamat

@@ -10,8 +10,6 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Session\TokenMismatchException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Throwable;
-
 use App\Http\Middleware\EnforceSingleSession;
 use App\Http\Middleware\CheckRole;
 

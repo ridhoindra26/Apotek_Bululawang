@@ -66,4 +66,19 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Employees::class, 'id_employee');
     }
+
+    public function reviewedSuggestions()
+    {
+        return $this->hasMany(Suggestion::class, 'reviewed_by');
+    }
+
+    public function correctedSuggestions()
+    {
+        return $this->hasMany(Suggestion::class, 'status_corrected_by');
+    }
+
+    public function createdSuggestionRewards()
+    {
+        return $this->hasMany(SuggestionReward::class, 'created_by');
+    }
 }

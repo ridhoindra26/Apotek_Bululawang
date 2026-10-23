@@ -37,4 +37,9 @@ class Branches extends Model
     {
         return $this->hasMany(SupplierTtPaymentBatch::class, 'branch_id');
     }
+
+    public function targetedSuggestions()
+    {
+        return $this->hasMany(Suggestion::class, 'target_branch_id');
+    }
 }

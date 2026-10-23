@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\Suggestion;
+use App\Policies\SuggestionPolicy;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Storage;
 use Masbug\Flysystem\GoogleDriveAdapter;
@@ -24,6 +27,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Gate::policy(Suggestion::class, SuggestionPolicy::class);
+
         \Storage::extend('google', function($app, $config) {
             $options = [];
 

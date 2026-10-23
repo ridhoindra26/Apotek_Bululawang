@@ -58,7 +58,7 @@ class SupplierTtPaymentBatchController extends Controller
         $data = $request->validate(['branch_id' => ['required', 'exists:branches,id'], 'payment_date' => ['required', 'date'], 'notes' => ['nullable', 'string'], 'invoice_ids' => ['required', 'array', 'min:1'], 'invoice_ids.*' => ['integer', 'distinct', 'exists:supplier_tt_invoices,id']]);
 
         $batch = DB::transaction(function () use ($data) {
-            $invoices = SupplierTtInvoice::whereKey($data['invoice_ids'])->lockForUpdate()->get();
+            $invoices = SupplierTtInvoice::with('supplier')->whereKey($data['invoice_ids'])->lockForUpdate()->get();
             if ($invoices->count() !== count($data['invoice_ids']) || $invoices->contains(fn ($invoice) => $invoice->status !== 'verified')) {
                 throw ValidationException::withMessages(['invoice_ids' => 'Semua faktur harus masih berstatus Terverifikasi.']);
             }
@@ -69,6 +69,7 @@ class SupplierTtPaymentBatchController extends Controller
             $batch = SupplierTtPaymentBatch::create(['batch_number' => 'PENDING-'.uniqid(), 'branch_id' => $data['branch_id'], 'payment_date' => $data['payment_date'], 'total_nominal' => $invoices->sum('net_nominal'), 'status' => 'draft', 'notes' => $data['notes'] ?? null]);
             $batch->update(['batch_number' => 'TTB-'.$batch->payment_date->format('Ymd').'-'.str_pad((string) $batch->id, 6, '0', STR_PAD_LEFT)]);
             $batch->invoices()->attach($invoices->mapWithKeys(fn ($invoice) => [$invoice->id => ['nominal_snapshot' => $invoice->net_nominal]])->all());
+            $this->syncSupplierAccountSnapshots($batch, $invoices);
             SupplierTtInvoice::whereKey($invoices->pluck('id'))->update(['status' => 'scheduled_payment']);
             return $batch;
         });
@@ -78,9 +79,14 @@ class SupplierTtPaymentBatchController extends Controller
 
     public function show(SupplierTtPaymentBatch $supplierTtPaymentBatch)
     {
-        $supplierTtPaymentBatch->load(['branch', 'invoices.supplier', 'locker', 'payer']);
+        $supplierTtPaymentBatch->load(['branch', 'invoices.supplier', 'supplierAccountSnapshots', 'locker', 'payer']);
         $groups = $supplierTtPaymentBatch->invoices->sortBy(fn ($invoice) => $invoice->supplier?->name)->groupBy('supplier_id');
-        return view('supplier-tt-payment-batches.show', ['batch' => $supplierTtPaymentBatch, 'groups' => $groups]);
+        $accountSnapshots = $supplierTtPaymentBatch->supplierAccountSnapshots->keyBy('supplier_id');
+        return view('supplier-tt-payment-batches.show', [
+            'batch' => $supplierTtPaymentBatch,
+            'groups' => $groups,
+            'accountSnapshots' => $accountSnapshots,
+        ]);
     }
 
     public function edit(SupplierTtPaymentBatch $supplierTtPaymentBatch)
@@ -111,6 +117,8 @@ class SupplierTtPaymentBatchController extends Controller
             SupplierTtInvoice::whereKey($currentIds->diff($data['invoice_ids']))->update(['status' => 'verified']);
             SupplierTtInvoice::whereKey($selected->pluck('id'))->update(['status' => 'scheduled_payment']);
             $batch->invoices()->sync($selected->mapWithKeys(fn ($invoice) => [$invoice->id => ['nominal_snapshot' => $invoice->net_nominal]])->all());
+            $selected->load('supplier');
+            $this->syncSupplierAccountSnapshots($batch, $selected);
             $batch->update(['branch_id' => $data['branch_id'], 'payment_date' => $data['payment_date'], 'total_nominal' => $selected->sum('net_nominal'), 'notes' => $data['notes'] ?? null]);
         });
         return redirect()->route('supplier-tt-payment-batches.show', $supplierTtPaymentBatch)->with('success', 'Batch berhasil diperbarui.');
@@ -145,9 +153,10 @@ class SupplierTtPaymentBatchController extends Controller
     public function pdf(SupplierTtPaymentBatch $supplierTtPaymentBatch)
     {
         abort_unless(in_array($supplierTtPaymentBatch->status, ['locked', 'paid']), 403, 'Batch harus dikunci sebelum PDF dapat dibuat.');
-        $supplierTtPaymentBatch->load(['branch', 'invoices.supplier', 'locker', 'payer']);
+        $supplierTtPaymentBatch->load(['branch', 'invoices.supplier', 'supplierAccountSnapshots', 'locker', 'payer']);
         $groups = $supplierTtPaymentBatch->invoices->sortBy(fn ($invoice) => $invoice->supplier?->name)->groupBy('supplier_id');
-        return Pdf::loadView('supplier-tt-payment-batches.pdf', ['batch' => $supplierTtPaymentBatch, 'groups' => $groups])->setPaper('a4')->download($supplierTtPaymentBatch->batch_number.'.pdf');
+        $accountSnapshots = $supplierTtPaymentBatch->supplierAccountSnapshots->keyBy('supplier_id');
+        return Pdf::loadView('supplier-tt-payment-batches.pdf', ['batch' => $supplierTtPaymentBatch, 'groups' => $groups, 'accountSnapshots' => $accountSnapshots])->setPaper('a4')->download($supplierTtPaymentBatch->batch_number.'.pdf');
     }
 
     public function unlock(SupplierTtPaymentBatch $supplierTtPaymentBatch)
@@ -174,5 +183,23 @@ class SupplierTtPaymentBatchController extends Controller
             $batch->update(['status' => 'paid', 'paid_at' => now(), 'paid_by' => auth()->id()]);
         });
         return back()->with('success', 'Batch dan seluruh faktur berhasil ditandai dibayar.');
+    }
+
+    private function syncSupplierAccountSnapshots(SupplierTtPaymentBatch $batch, $invoices): void
+    {
+        $rows = $invoices
+            ->filter(fn ($invoice) => $invoice->supplier_id && $invoice->supplier)
+            ->unique('supplier_id')
+            ->map(fn ($invoice) => [
+                'supplier_id' => $invoice->supplier_id,
+                'bank_name' => $invoice->supplier->bank_name,
+                'bank_account_number' => $invoice->supplier->bank_account_number,
+                'bank_account_holder' => $invoice->supplier->bank_account_holder,
+            ])
+            ->values()
+            ->all();
+
+        $batch->supplierAccountSnapshots()->delete();
+        $batch->supplierAccountSnapshots()->createMany($rows);
     }
 }
