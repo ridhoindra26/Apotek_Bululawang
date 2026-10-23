@@ -28,6 +28,10 @@ use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\GoodsReceiptController;
 use App\Http\Controllers\SupplierTtInvoiceController;
 use App\Http\Controllers\SupplierTtPaymentBatchController;
+use App\Http\Controllers\SuggestionController;
+use App\Http\Controllers\Admin\SuggestionManagementController;
+use App\Http\Controllers\Admin\SuggestionRewardController;
+use App\Http\Controllers\Admin\SuggestionDashboardController;
 
 Route::get('/', function () {
     return redirect()->route('auth.index');
@@ -116,6 +120,43 @@ Route::prefix('goods-receipts')
  * Protected routes: require auth + single.session
  */
 Route::middleware(['auth', 'single.session'])->group(function () {
+
+    Route::prefix('admin/suggestions')
+        ->name('admin.suggestions.')
+        ->middleware('role:superadmin')
+        ->controller(SuggestionManagementController::class)
+        ->group(function () {
+            Route::get('/dashboard', SuggestionDashboardController::class)->name('dashboard');
+            Route::get('/', 'index')->name('index');
+            Route::get('/{suggestion}', 'show')->name('show');
+            Route::patch('/{suggestion}/evaluation', 'evaluation')->name('evaluation');
+            Route::patch('/{suggestion}/status', 'status')->name('status');
+            Route::patch('/{suggestion}/correction', 'correction')->name('correction');
+        });
+
+    Route::middleware('role:superadmin')->group(function () {
+        Route::get('/admin/suggestion-rewards', [SuggestionRewardController::class, 'index'])->name('admin.suggestion-rewards.index');
+        Route::post('/admin/suggestions/{suggestion}/rewards', [SuggestionRewardController::class, 'store'])->name('admin.suggestion-rewards.store');
+        Route::patch('/admin/suggestion-rewards/{reward}', [SuggestionRewardController::class, 'update'])->name('admin.suggestion-rewards.update');
+        Route::patch('/admin/suggestion-rewards/{reward}/deliver', [SuggestionRewardController::class, 'deliver'])->name('admin.suggestion-rewards.deliver');
+        Route::patch('/admin/suggestion-rewards/{reward}/cancel', [SuggestionRewardController::class, 'cancel'])->name('admin.suggestion-rewards.cancel');
+    });
+
+    Route::prefix('suggestions')
+        ->name('suggestions.')
+        ->middleware('role:user,admin,superadmin')
+        ->controller(SuggestionController::class)
+        ->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/mine', 'mine')->name('mine');
+            Route::get('/archive', 'archive')->name('archive');
+            Route::get('/create', 'create')->name('create');
+            Route::post('/', 'store')->name('store');
+            Route::get('/attachments/{attachment}', 'downloadAttachment')->name('attachments.download');
+            Route::get('/{suggestion}', 'show')->name('show');
+            Route::get('/{suggestion}/edit', 'edit')->name('edit');
+            Route::put('/{suggestion}', 'update')->name('update');
+        });
 
     /**
      * Dashboard — semua role

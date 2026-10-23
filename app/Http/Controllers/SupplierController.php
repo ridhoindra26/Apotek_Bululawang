@@ -23,7 +23,10 @@ class SupplierController extends Controller
                 $q->where('name', 'like', "%{$search}%")
                     ->orWhere('code', 'like', "%{$search}%")
                     ->orWhere('phone', 'like', "%{$search}%")
-                    ->orWhere('contact_person', 'like', "%{$search}%");
+                    ->orWhere('contact_person', 'like', "%{$search}%")
+                    ->orWhere('bank_name', 'like', "%{$search}%")
+                    ->orWhere('bank_account_number', 'like', "%{$search}%")
+                    ->orWhere('bank_account_holder', 'like', "%{$search}%");
             });
         }
 
@@ -94,15 +97,15 @@ class SupplierController extends Controller
             .'<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
 
         $rows = [
-            ['nama', 'kode', 'telepon', 'email', 'alamat', 'contact_person', 'telepon_contact_person', 'npwp', 'status'],
-            ['PT Contoh Supplier', 'SUP-001', '081234567890', 'supplier@example.com', 'Jl. Contoh No. 1', 'Budi', '081298765432', '00.000.000.0-000.000', 'aktif'],
+            ['nama', 'kode', 'telepon', 'email', 'alamat', 'contact_person', 'telepon_contact_person', 'npwp', 'bank_rekening', 'no_rekening', 'nama_pemilik_rekening', 'status'],
+            ['PT Contoh Supplier', 'SUP-001', '081234567890', 'supplier@example.com', 'Jl. Contoh No. 1', 'Budi', '081298765432', '00.000.000.0-000.000', 'BCA', '0123456789', 'PT Contoh Supplier', 'aktif'],
         ];
         $sheetRows = '';
         foreach ($rows as $rowIndex => $row) {
             $cells = '';
             foreach ($row as $columnIndex => $value) {
                 $column = chr(65 + $columnIndex);
-                $style = $rowIndex === 0 ? 1 : (in_array($columnIndex, [1, 2, 6, 7], true) ? 2 : 0);
+                $style = $rowIndex === 0 ? 1 : (in_array($columnIndex, [1, 2, 6, 7, 9], true) ? 2 : 0);
                 $escaped = htmlspecialchars($value, ENT_XML1 | ENT_QUOTES, 'UTF-8');
                 $cells .= '<c r="'.$column.($rowIndex + 1).'" t="inlineStr" s="'.$style.'"><is><t>'.$escaped.'</t></is></c>';
             }
@@ -110,8 +113,8 @@ class SupplierController extends Controller
         }
         $worksheet = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
             .'<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>'
-            .'<cols><col min="1" max="1" width="28" customWidth="1"/><col min="2" max="4" width="20" customWidth="1"/><col min="5" max="5" width="35" customWidth="1"/><col min="6" max="9" width="22" customWidth="1"/></cols>'
-            .'<sheetData>'.$sheetRows.'</sheetData><autoFilter ref="A1:I2"/></worksheet>';
+            .'<cols><col min="1" max="1" width="28" customWidth="1"/><col min="2" max="4" width="20" customWidth="1"/><col min="5" max="5" width="35" customWidth="1"/><col min="6" max="12" width="22" customWidth="1"/></cols>'
+            .'<sheetData>'.$sheetRows.'</sheetData><autoFilter ref="A1:L2"/></worksheet>';
 
         $zip->addFromString('[Content_Types].xml', $contentTypes);
         $zip->addFromString('_rels/.rels', $rootRelations);
@@ -167,7 +170,11 @@ class SupplierController extends Controller
             'telepon' => 'phone', 'phone' => 'phone', 'email' => 'email', 'alamat' => 'address', 'address' => 'address',
             'contact_person' => 'contact_person', 'kontak' => 'contact_person',
             'telepon_contact_person' => 'contact_person_phone', 'contact_person_phone' => 'contact_person_phone',
-            'npwp' => 'npwp', 'status' => 'status',
+            'npwp' => 'npwp',
+            'bank_rekening' => 'bank_name', 'bank' => 'bank_name', 'bank_name' => 'bank_name',
+            'no_rekening' => 'bank_account_number', 'nomor_rekening' => 'bank_account_number', 'bank_account_number' => 'bank_account_number',
+            'nama_pemilik_rekening' => 'bank_account_holder', 'pemilik_rekening' => 'bank_account_holder', 'bank_account_holder' => 'bank_account_holder',
+            'status' => 'status',
         ];
         $normalizeHeader = function ($header) use ($aliases) {
             $normalized = Str::of((string) $header)
@@ -217,6 +224,9 @@ class SupplierController extends Controller
                     'phone' => ['nullable', 'string', 'max:50'], 'email' => ['nullable', 'email', 'max:255'],
                     'address' => ['nullable', 'string'], 'contact_person' => ['nullable', 'string', 'max:255'],
                     'contact_person_phone' => ['nullable', 'string', 'max:50'], 'npwp' => ['nullable', 'string', 'max:100'],
+                    'bank_name' => ['nullable', 'string', 'max:100'],
+                    'bank_account_number' => ['nullable', 'string', 'max:100'],
+                    'bank_account_holder' => ['nullable', 'string', 'max:255'],
                     'is_active' => ['boolean'],
                 ]);
                 if ($validator->fails()) {
@@ -348,6 +358,9 @@ class SupplierController extends Controller
             'contact_person' => ['nullable', 'string', 'max:255'],
             'contact_person_phone' => ['nullable', 'string', 'max:50'],
             'npwp' => ['nullable', 'string', 'max:100'],
+            'bank_name' => ['nullable', 'string', 'max:100'],
+            'bank_account_number' => ['nullable', 'string', 'max:100'],
+            'bank_account_holder' => ['nullable', 'string', 'max:255'],
             'is_active' => ['nullable', 'boolean'],
         ]);
 
@@ -395,6 +408,9 @@ class SupplierController extends Controller
             'contact_person' => ['nullable', 'string', 'max:255'],
             'contact_person_phone' => ['nullable', 'string', 'max:50'],
             'npwp' => ['nullable', 'string', 'max:100'],
+            'bank_name' => ['nullable', 'string', 'max:100'],
+            'bank_account_number' => ['nullable', 'string', 'max:100'],
+            'bank_account_holder' => ['nullable', 'string', 'max:255'],
             'is_active' => ['nullable', 'boolean'],
         ]);
 

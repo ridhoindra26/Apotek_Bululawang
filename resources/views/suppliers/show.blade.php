@@ -119,6 +119,15 @@
                         </dd>
                     </div>
 
+                    <div class="sm:col-span-2 rounded-xl border border-gray-200 bg-gray-50 p-4">
+                        <dt class="text-xs font-medium uppercase tracking-wide text-gray-500">Rekening Pembayaran</dt>
+                        <dd class="mt-2 grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
+                            <div><span class="block text-xs text-gray-500">Bank</span><span class="font-semibold text-gray-900">{{ $supplier->bank_name ?: '-' }}</span></div>
+                            <div><span class="block text-xs text-gray-500">Nomor Rekening</span><span class="font-semibold text-gray-900">{{ $supplier->bank_account_number ?: '-' }}</span></div>
+                            <div><span class="block text-xs text-gray-500">Pemilik Rekening</span><span class="font-semibold text-gray-900">{{ $supplier->bank_account_holder ?: '-' }}</span></div>
+                        </dd>
+                    </div>
+
                     <div>
                         <dt class="text-xs font-medium uppercase tracking-wide text-gray-500">
                             Status

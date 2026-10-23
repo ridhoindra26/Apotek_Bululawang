@@ -14,6 +14,7 @@ class SupplierTtPaymentBatch extends Model
 
     public function branch() { return $this->belongsTo(Branches::class, 'branch_id'); }
     public function invoices() { return $this->belongsToMany(SupplierTtInvoice::class, 'supplier_tt_payment_batch_items', 'payment_batch_id', 'supplier_tt_invoice_id')->withPivot('nominal_snapshot')->withTimestamps(); }
+    public function supplierAccountSnapshots() { return $this->hasMany(SupplierTtPaymentBatchSupplierAccount::class, 'payment_batch_id'); }
     public function locker() { return $this->belongsTo(User::class, 'locked_by'); }
     public function payer() { return $this->belongsTo(User::class, 'paid_by'); }
     public function getStatusLabelAttribute(): string { return match ($this->status) { 'draft' => 'Draft', 'locked' => 'Dikunci', 'paid' => 'Dibayar', default => ucfirst($this->status) }; }

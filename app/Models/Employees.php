@@ -57,10 +57,10 @@ class Employees extends Model
     {
         return $this->hasMany(Vacations::class, 'id_employee');
     }
-    
+
     public function user()
     {
-        return $this->hasOne(User::class, 'employee_id');
+        return $this->hasOne(User::class, 'id_employee');
     }
 
     public function defaultPagiShift(){ 
@@ -80,6 +80,11 @@ class Employees extends Model
     public function payroll_items()
     {
         return $this->hasMany(PayrollItem::class, 'id_employee');
+    }
+
+    public function suggestions()
+    {
+        return $this->hasMany(Suggestion::class, 'submitted_by_employee_id');
     }
 
     public function scopeOrderByClosestBirthday($query)

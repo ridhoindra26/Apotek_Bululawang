@@ -129,6 +129,12 @@
       {{-- Superadmin only: Master Data --}}
       @if(auth()->user()->role === 'superadmin')
 
+        <a href="{{ route('admin.suggestions.index') }}"
+           class="flex items-center gap-3 px-4 py-2.5 {{ navClass(request()->routeIs('admin.suggestions.*', 'admin.suggestion-rewards.*')) }}">
+          <i class="ri-lightbulb-flash-line text-2xl"></i>
+          <span>Manajemen Saran</span>
+        </a>
+
         <a href="{{ route('accounts.index') }}"
            class="flex items-center gap-3 px-4 py-2.5 {{ navClass(request()->routeIs('accounts.*')) }}">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6">
@@ -168,6 +174,15 @@
         </svg>
         <span>URL Short</span>
       </a>
+      @endif
+
+      {{-- User & Admin: Suggestions (keep as the last sidebar menu) --}}
+      @if(in_array(auth()->user()->role, ['user', 'admin']))
+        <a href="{{ route('suggestions.index') }}"
+           class="flex items-center gap-3 px-4 py-2.5 {{ navClass(request()->routeIs('suggestions.*')) }}">
+          <i class="ri-lightbulb-flash-line text-2xl"></i>
+          <span>Saran & Improvement</span>
+        </a>
       @endif
     @endauth
   </nav>

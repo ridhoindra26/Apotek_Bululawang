@@ -1,11 +1,10 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
-
-// use App\Http\Controllers\jadwalController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\ShortUrlController;
+// use App\Http\Controllers\jadwalController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -23,19 +22,19 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 Route::controller(AttendanceController::class)->group(function () {
-    Route::get('/attendance/greeting', 'greeting')->name('attendance.greeting');
-    Route::post('/attendance/checkin', 'checkIn')->middleware(['auth', 'single.session'])->name('attendance.checkin');
-    Route::post('/attendance/checkout', 'checkOut')->middleware(['auth', 'single.session'])->name('attendance.checkout');
-    Route::post('/attendance/dummy', 'dummy')->name('attendance.dummy');
+    Route::get('/attendance/greeting', 'greeting')->name('api.attendance.greeting');
+    Route::post('/attendance/checkin', 'checkIn')->middleware(['auth', 'single.session'])->name('api.attendance.checkin');
+    Route::post('/attendance/checkout', 'checkOut')->middleware(['auth', 'single.session'])->name('api.attendance.checkout');
+    Route::post('/attendance/dummy', 'dummy')->name('api.attendance.dummy');
 });
 
 Route::prefix('public')->group(function () {
     // Short URL
     Route::get('/short-url/{code}', [ShortUrlController::class, 'shortUrl']);
-    Route::post('/short-url/visit', [ShortUrlController::class, 'shortUrlVisit']); 
+    Route::post('/short-url/visit', [ShortUrlController::class, 'shortUrlVisit']);
 });
 
 Route::prefix('private')->group(function () {
     // Short URL
-    Route::post('/qrcode/generate', [ShortUrlController::class, 'generateQRCode']); 
+    Route::post('/qrcode/generate', [ShortUrlController::class, 'generateQRCode']);
 });

@@ -164,9 +164,9 @@ document.addEventListener('alpine:init', () => {
 
         async compressImage(file, options = {}) {
             const {
-                maxWidth = 1280,
-                maxHeight = 1280,
-                quality = 0.72,
+                maxWidth = 2200,
+                maxHeight = 2200,
+                quality = 0.90,
                 outputType = 'image/jpeg',
             } = options
 
@@ -189,11 +189,20 @@ document.addEventListener('alpine:init', () => {
             canvas.height = height
 
             const context = canvas.getContext('2d')
+            context.imageSmoothingEnabled = true
+            context.imageSmoothingQuality = 'high'
             context.drawImage(image, 0, 0, width, height)
 
-            const blob = await new Promise((resolve) => {
-                canvas.toBlob(resolve, outputType, quality)
+            const encode = (jpegQuality) => new Promise((resolve) => {
+                canvas.toBlob(resolve, outputType, jpegQuality)
             })
+            let blob = await encode(quality)
+
+            // Pertahankan kualitas utama; turunkan sedikit hanya jika berisiko
+            // melewati validasi backend 4 MB.
+            if (blob?.size > 3.8 * 1024 * 1024) {
+                blob = await encode(0.82)
+            }
 
             if (!blob) {
                 throw new Error('Gagal compress gambar.')
@@ -257,9 +266,9 @@ document.addEventListener('alpine:init', () => {
                     }
 
                     const compressedFile = await this.compressImage(file, {
-                        maxWidth: 1280,
-                        maxHeight: 1280,
-                        quality: 0.72,
+                        maxWidth: 2200,
+                        maxHeight: 2200,
+                        quality: 0.90,
                         outputType: 'image/jpeg',
                     })
 

@@ -590,8 +590,8 @@
                                 <label class="flex min-h-24 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#318f8c]/40 bg-teal-50/60 px-4 py-4 text-center transition hover:border-[#318f8c] hover:bg-teal-50">
                                     <i class="ri-camera-line text-2xl text-[#318f8c]"></i>
                                     <span class="mt-1 text-sm font-semibold text-gray-800">Tambah Foto Faktur</span>
-                                    <span class="mt-1 text-xs text-gray-500">Pilih kamera atau galeri dari perangkat. Galeri mendukung beberapa foto.</span>
-                                    <input type="file" class="hidden" accept="image/*" multiple :name="`invoices[${invoiceIndex}][photos][]`" :data-invoice-file-input="invoice.id" @change="handleInvoicePages($event, invoiceIndex)">
+                                    <span class="mt-1 text-xs text-gray-500">Buka kamera belakang. Tekan lagi untuk menambah halaman.</span>
+                                    <input type="file" class="hidden" accept="image/*" capture="environment" :name="`invoices[${invoiceIndex}][photos][]`" :data-invoice-file-input="invoice.id" @change="handleInvoicePages($event, invoiceIndex)">
                                 </label>
                             </div>
 
